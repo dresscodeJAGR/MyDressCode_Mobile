@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mdc/profile/pages/favoris.dart';
 import 'package:mdc/profile/pages/outfits.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PrincipalProfile extends StatefulWidget {
   const PrincipalProfile({super.key});
@@ -97,31 +98,28 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
           style: ElevatedButton.styleFrom(
             primary: const Color.fromRGBO(79, 125, 88, 1),
           ),
-          onPressed: () => {
+          onPressed: () {
             Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PrincipalProfile(),
-                ))
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PrincipalProfile(),
+              ),
+            );
           },
-          child: const Icon(
-            Icons.edit_outlined
-          ),
+          child: const Icon(Icons.edit_outlined),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             primary: const Color.fromRGBO(79, 125, 88, 1),
           ),
-          onPressed: () => {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PrincipalProfile(),
-                ))
+          onPressed: () async {
+            // Remplacez par le message et le lien que vous voulez partager
+            const String message = "Mon pseudonyme sur MyDressCode:";
+            final String url = "Nom Prenom";
+
+            await Share.share("$message $url");
           },
-          child: const Icon(
-            Icons.share_outlined
-          ),
+          child: const Icon(Icons.share_outlined),
         ),
       ],
     );
@@ -215,8 +213,5 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
       ),
     );
   }
-
-
-
 
 }

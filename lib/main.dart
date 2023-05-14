@@ -4,9 +4,6 @@ import 'package:mdc/pages/dressing.dart';
 import 'package:mdc/profile/principalProfile.dart';
 import 'package:mdc/home/home.dart';
 
-
-import 'auth/login/login.dart';
-
 void main() {
   runApp(const MyApp());
 }

@@ -61,6 +61,49 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     ],
   };
 
+  List<bool> _favoriteStars = List.generate(3, (index) => false);
+
+  void _toggleFavoriteStar(int index) {
+    if (_favoriteStars[index]) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Retirer des favoris"),
+            content: const Text("Êtes-vous sûr de vouloir retirer cet outfit de vos favoris ?"),
+            actions: [
+              TextButton(
+                child: const Text("Oui"),
+                style: TextButton.styleFrom(
+                  primary: Colors.green, // Couleur du texte du bouton "Oui"
+                ),
+                onPressed: () {
+                  setState(() {
+                    _favoriteStars[index] = !_favoriteStars[index];
+                  });
+                  Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                },
+              ),
+              TextButton(
+                child: const Text("Non"),
+                style: TextButton.styleFrom(
+                  primary: Colors.red, // Couleur du texte du bouton "Non"
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      setState(() {
+        _favoriteStars[index] = !_favoriteStars[index];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,53 +172,51 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 10),
-            child: Stack(
-              children: [
-                const Text(
-                  "Mes outfits préférés",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Positioned(
-                  top: 22, // Espacement entre le texte et le soulignement
-                  left: 0,
-                  child: Container(
-                    width: 300, // Largeur du soulignement
-                    height: 5, // Épaisseur du soulignement
-                    color: const Color.fromRGBO(79, 125, 88, 1), // Couleur du soulignement
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // ...
           const SizedBox(height: 10),
-          ...(user['outfits'] ?? []).map<Widget>((outfit) {
+          ...(user['outfits'] ?? []).asMap().entries.map<Widget>((entry) {
+            int index = entry.key;
+            Map<String, dynamic> outfit = entry.value;
             return Card(
               elevation: 5,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      outfit['title'] ?? '',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ...(outfit['images'] ?? []).map<Widget>((imageUrl) {
-                          return _buildOutfitItem(imageUrl: imageUrl);
-                        }).toList(),
+                        Text(
+                          outfit['title'] ?? '',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ...(outfit['images'] ?? []).map<Widget>((imageUrl) {
+                              return _buildOutfitItem(imageUrl: imageUrl);
+                            }).toList(),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                  ],
-                ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      icon: Icon(
+                        _favoriteStars[index] ? Icons.favorite : Icons.favorite_border,
+                        color: _favoriteStars[index] ? Colors.red : Colors.grey,
+                      ),
+                      onPressed: () => _toggleFavoriteStar(index),
+                    ),
+                  ),
+                ],
               ),
             );
           }).toList(),
