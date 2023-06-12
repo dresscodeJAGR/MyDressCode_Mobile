@@ -37,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_native_splash: ^2.2.19
   carousel_slider: ^4.2.1
-  share_plus: ^6.3.4
+  share_plus: ^7.0.1
 
 flutter_native_splash:
   android: true
