@@ -71,7 +71,7 @@ class _RegisterState extends State<Register> {
                           if (value == null || value.isEmpty) {
                             return 'Merci de rentrer un mot de passe';
                           }
-                          if (value.length < 6) {
+                          if (value.length < 8) {
                             return 'Votre mot de passe doit faire minimum 6 caractères';
                           }
                           return null;
