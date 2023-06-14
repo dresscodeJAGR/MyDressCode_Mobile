@@ -138,35 +138,165 @@ class _DressingState extends State<Dressing> {
               child: Text("Vous n'avez pas sélectionné de catégorie"),
             ),
           ) : Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(8),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.8,
-                ),
-                itemCount: parentCategories[selectedParentCategory]![selectedChildCategory]!.length,
-                itemBuilder: (context, index) {
-                  return Image.asset(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: parentCategories[selectedParentCategory]![selectedChildCategory]!.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => _openDialog(
+                      context,
+                      parentCategories[selectedParentCategory]![selectedChildCategory]![index],
+                      'name',
+                      'brand',
+                      'category',
+                      'color',
+                      'cleanliness'
+                  ),
+                  child: Image.asset(
                     parentCategories[selectedParentCategory]![selectedChildCategory]![index],
                     fit: BoxFit.cover,
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
+          ),
         ],
       ),
     );
   }
 
+  void _openDialog(BuildContext context, String imageUrl, String name, String brand, String category, String color, String cleanliness) {
+    final nameController = TextEditingController(text: name);
+    final brandController = TextEditingController(text: brand);
+    final categoryController = TextEditingController(text: category);
+    final colorController = TextEditingController(text: color);
+    final cleanlinessController = TextEditingController(text: cleanliness);
+
+    bool isEditing = false;  // <-- Initialize it outside of the builder
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              contentPadding: EdgeInsets.zero,
+              content: Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(20),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          AspectRatio(
+                            aspectRatio: 1.0,
+                            child: Image.asset(imageUrl, fit: BoxFit.cover),
+                          ),
+                          SizedBox(height: 10),
+                          if (isEditing)
+                            TextFormField(
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                  focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.green)
+                                  )
+                              ),
+                            )
+                          else
+                            Text('Nom: $name'),
+                          if (isEditing)
+                            TextFormField(
+                              controller: brandController,
+                              decoration: const InputDecoration(
+                                  focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.green)
+                                  )
+                              ),
+                            )
+                          else
+                            Text('Marque: $brand'),
+                          if (isEditing)
+                            TextFormField(
+                              controller: categoryController,
+                              decoration: const InputDecoration(
+                                  focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.green)
+                                  )
+                              ),
+                            )
+                          else
+                            Text('Catégorie: $category'),
+                          if (isEditing)
+                            TextFormField(
+                              controller: colorController,
+                              decoration: const InputDecoration(
+                                  focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.green)
+                                  )
+                              ),
+                            )
+                          else
+                            Text('Couleur: $color'),
+                          if (isEditing)
+                            TextFormField(
+                              controller: cleanlinessController,
+                              decoration: const InputDecoration(
+                                  focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.green)
+                                  )
+                              ),
+                            )
+                          else
+                            Text('État de propreté: $cleanliness'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      icon: Icon(isEditing ? Icons.check : Icons.edit),
+                      onPressed: () {
+                        setState(() {
+                          if (isEditing) {
+                            name = nameController.text;
+                            brand = brandController.text;
+                            category = categoryController.text;
+                            color = colorController.text;
+                            cleanliness = cleanlinessController.text;
+                            // Implement your update logic here
+                          }
+                          isEditing = !isEditing;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
   final Map<String, Map<String, List<String>>> parentCategories = {
     'Haut': {
       'T-shirts': [
-        'assets/images/tshirt1.png',
-        'assets/images/tshirt2.png',
-        'assets/images/tshirt3.png',
-        'assets/images/tshirt3.png',
+        'assets/images/tshirt.png',
+        'assets/images/tshirt.png',
+        'assets/images/tshirt.png',
+        'assets/images/tshirt.png',
       ],
       'Vestes': [
         'assets/images/tshirt1.png',

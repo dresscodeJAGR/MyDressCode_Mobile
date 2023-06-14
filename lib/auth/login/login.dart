@@ -79,7 +79,7 @@ class _LoginState extends State<Login> {
                           if (value == null || value.isEmpty) {
                             return "Merci d'entrer votre mot de passe";
                           }
-                          if (value.length < 6) {
+                          if (value.length < 8) {
                             return 'Votre mot de passe est trop court';
                           }
                           return null;

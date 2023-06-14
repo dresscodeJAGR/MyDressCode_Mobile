@@ -12,6 +12,7 @@ class Outfits extends StatefulWidget {
 
 class _OutfitsState extends State<Outfits> {
   int _current = 0;
+  final List<bool> _favoriteStars = List.generate(3, (index) => false);
 
   void confirmationSuppression(int index) {
     showDialog(
@@ -117,6 +118,7 @@ class _OutfitsState extends State<Outfits> {
       ),
     );
   }
+
   Widget _buildOutfit(double height, int index) {
     double imageSize = height * 0.25; // 25% de la hauteur disponible
     return Stack(
