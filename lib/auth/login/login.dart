@@ -113,7 +113,7 @@ class _LoginState extends State<Login> {
                                 SharedPreferences prefs = await SharedPreferences.getInstance();
                                 await prefs.setString('token', token);
 
-                                Navigator.push(
+                                Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(builder: (context) => const MainWidget()),
                                 );
