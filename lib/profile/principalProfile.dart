@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mdc/profile/pages/favoris.dart';
 import 'package:mdc/profile/pages/outfits.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class PrincipalProfile extends StatefulWidget {
   const PrincipalProfile({super.key});
@@ -12,19 +15,54 @@ class PrincipalProfile extends StatefulWidget {
 
 class _PrincipalProfileState extends State<PrincipalProfile> {
   final double profileHeight = 144;
+  String userName = "";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUser();
+  }
+
+  fetchUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/user');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      var user = jsonResponse;
+      setState(() {
+        userName = user['pseudo'];
+      });
+
+      print('Username: $userName');
+    } else {
+      // Handle error case
+      print('Failed to load user');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        elevation: 15,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+        title: const Text('Profil'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(
               Icons.settings,
-              color: Colors.black38,
+              color: Colors.white,
             ),
             onPressed: () => {
 
@@ -77,8 +115,8 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
   Widget buildName() {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
-      child: const Text(
-        'Prénom Nom',
+      child: Text(
+        userName,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.black,
@@ -159,13 +197,13 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
                 Text(
                   "Favoris",
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 20,
+                  size: 30,
                 ),
               ],
             ),
@@ -198,13 +236,13 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
                 Text(
                   "Outfits",
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 20,
+                  size: 30,
                 ),
               ],
             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import '../../pages/outfitCreate.dart';
 
@@ -12,7 +14,30 @@ class Outfits extends StatefulWidget {
 
 class _OutfitsState extends State<Outfits> {
   int _current = 0;
-  final List<bool> _favoriteStars = List.generate(3, (index) => false);
+  List outfits = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchOutfits();
+  }
+
+  fetchOutfits() async {
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits');
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      var outfitsList = jsonResponse['outfits'];
+      setState(() {
+        outfits = outfitsList;
+        isLoading = false;
+      });
+    } else {
+      print('Failed to load outfits');
+    }
+  }
 
   void confirmationSuppression(int index) {
     showDialog(
@@ -25,21 +50,19 @@ class _OutfitsState extends State<Outfits> {
             TextButton(
               child: const Text("Oui"),
               style: TextButton.styleFrom(
-                primary: Colors.green, // Couleur du texte du bouton "Oui"
+                primary: Colors.green,
               ),
               onPressed: () {
-                // Supprimer l'outfit ici
-                // par exemple: outfits.removeAt(index);
-                Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text("Non"),
               style: TextButton.styleFrom(
-                primary: Colors.red, // Couleur du texte du bouton "Non"
+                primary: Colors.red,
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -47,8 +70,6 @@ class _OutfitsState extends State<Outfits> {
       },
     );
   }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,13 +77,15 @@ class _OutfitsState extends State<Outfits> {
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         title: const Text("Outfits"),
       ),
-      body: Column(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return CarouselSlider.builder(
-                  itemCount: 5,
+                  itemCount: outfits.length,
                   itemBuilder: (context, index, realIndex) {
                     return _buildOutfit(constraints.maxHeight * 1, index);
                   },
@@ -86,7 +109,8 @@ class _OutfitsState extends State<Outfits> {
             padding: const EdgeInsets.only(bottom: 30.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
+              children: outfits.map<Widget>((outfit) {
+                int index = outfits.indexOf(outfit);
                 return Container(
                   width: _current == index ? 16.0 : 12.0,
                   height: _current == index ? 16.0 : 12.0,
@@ -98,12 +122,11 @@ class _OutfitsState extends State<Outfits> {
                         : const Color.fromRGBO(79, 125, 88, 0.4),
                   ),
                 );
-              }),
+              }).toList(),
             ),
           ),
         ],
       ),
-      // ...
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -121,6 +144,8 @@ class _OutfitsState extends State<Outfits> {
 
   Widget _buildOutfit(double height, int index) {
     double imageSize = height * 0.25; // 25% de la hauteur disponible
+    var outfit = outfits[index];
+
     return Stack(
       children: [
         Container(
@@ -133,11 +158,13 @@ class _OutfitsState extends State<Outfits> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Image.asset('assets/images/tshirt.png', width: imageSize, height: imageSize),
-                Image.asset('assets/images/pantalon.png', width: imageSize, height: imageSize),
-                Image.asset('assets/images/chaussures.png', width: imageSize, height: imageSize),
-              ],
+              children: outfit['clothings'].map<Widget>((clothing) {
+                return Image.network(
+                  clothing['real_url'],
+                  width: imageSize,
+                  height: imageSize,
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -145,14 +172,11 @@ class _OutfitsState extends State<Outfits> {
           top: 8,
           right: 8,
           child: IconButton(
-            icon: const Icon(
-              Icons.close
-            ),
+            icon: const Icon(Icons.close),
             onPressed: () => confirmationSuppression(index),
           ),
         ),
       ],
     );
   }
-
 }

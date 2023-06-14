@@ -13,11 +13,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   String userName = "";
+  var dailyOutfit = [];
 
   @override
   void initState() {
     super.initState();
     fetchUser();
+    fetchDailyOutfit();
   }
 
   fetchUser() async {
@@ -39,12 +41,48 @@ class _HomeState extends State<Home> {
       setState(() {
         userName = user['pseudo'];
       });
-
-      print('Username: $userName');
     } else {
       // Handle error case
       print('Failed to load user');
     }
+  }
+
+  fetchDailyOutfit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits/daily');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      var outfit = jsonResponse['outfit']['clothings'];
+      setState(() {
+        dailyOutfit = outfit;
+      });
+
+      print('Daily Outfit: $dailyOutfit');
+    } else {
+      // Handle error case
+      print('Failed to load daily outfit');
+    }
+  }
+
+  Row buildOutfitRow() {
+    List<Widget> items = [];
+    for (var item in dailyOutfit) {
+      items.add(_buildOutfitItem(imageUrl: item['real_url']));
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: items,
+    );
   }
 
   @override
@@ -109,14 +147,7 @@ class _HomeState extends State<Home> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildOutfitItem( imageUrl: 'assets/images/tshirt.png' ),
-                          _buildOutfitItem( imageUrl: 'assets/images/pantalon.png' ),
-                          _buildOutfitItem( imageUrl: 'assets/images/chaussures.png' ),
-                        ],
-                      ),
+                      buildOutfitRow(),
                     ],
                   ),
                 ),
@@ -162,7 +193,7 @@ class _HomeState extends State<Home> {
               borderRadius: BorderRadius.circular(16.0),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: Image.asset(
+                child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
                 ),
