@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:mdc/pages/rechercheUtilisateur.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -9,7 +12,40 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  String userName = "Guilhem";
+  String userName = "";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUser();
+  }
+
+  fetchUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/user');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      var user = jsonResponse;
+      setState(() {
+        userName = user['pseudo'];
+      });
+
+      print('Username: $userName');
+    } else {
+      // Handle error case
+      print('Failed to load user');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

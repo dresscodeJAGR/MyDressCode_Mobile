@@ -4,6 +4,7 @@ import 'package:mdc/pages/dressing.dart';
 import 'package:mdc/profile/principalProfile.dart';
 import 'package:mdc/home/home.dart';
 
+import 'auth/login/login.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const MainWidget(),
+      home: const Login(),
       routes: {
         '/register': (context) => const Register(),
         '/main': (context) => const MainWidget(),
