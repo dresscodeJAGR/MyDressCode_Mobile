@@ -23,6 +23,7 @@ class _LoginState extends State<Login> {
   final TextEditingController _passwordController = TextEditingController();
 
   String _response = '';
+  String _responseToDisplay = '';
 
   @override
   Widget build(BuildContext context) {
@@ -79,13 +80,16 @@ class _LoginState extends State<Login> {
                           if (value == null || value.isEmpty) {
                             return "Merci d'entrer votre mot de passe";
                           }
-                          if (value.length < 8) {
-                            return 'Votre mot de passe est trop court';
-                          }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16.0),
+                      Text(
+                        _responseToDisplay,
+                        style: const TextStyle(
+                          color: Colors.red,
+                        ),
+                      ),
                       ElevatedButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
@@ -118,9 +122,9 @@ class _LoginState extends State<Login> {
                                   MaterialPageRoute(builder: (context) => const MainWidget()),
                                 );
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Mauvais identifiant ou mot de passe')),
-                                );
+                                setState(() {
+                                  _responseToDisplay = 'Mauvais identifiant ou mot de passe';
+                                });
                               }
                             }catch (e) {
                               print('Erreur lors de la connexion: $e');
