@@ -1,4 +1,116 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
+import 'addCloth.dart';
+
+class Category {
+  final int id;
+  final String name;
+  final String image;
+  final String createdAt;
+  final String updatedAt;
+  final List<SubCategory> subCategories;
+
+  Category({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.subCategories,
+  });
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    var list = json['category'] as List;
+    List<SubCategory> subCategoryList =
+    list.map((i) => SubCategory.fromJson(i)).toList();
+
+    return Category(
+      id: json['id'],
+      name: json['name'],
+      image: json['image'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
+      subCategories: subCategoryList,
+    );
+  }
+}
+
+class SubCategory {
+  final int id;
+  final String name;
+  final String image;
+  final String createdAt;
+  final String updatedAt;
+  final int parentCategoryId;
+
+  SubCategory({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.parentCategoryId,
+  });
+
+  factory SubCategory.fromJson(Map<String, dynamic> json) {
+    return SubCategory(
+      id: json['id'],
+      name: json['name'],
+      image: json['image'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
+      parentCategoryId: json['parent_category_id'],
+    );
+  }
+}
+
+class Cloth {
+  final int id;
+  final String name;
+  final String image;
+  final bool isDirty;
+  final int userId;
+  final int colorId;
+  final int brandId;
+  final int categoryId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final int sizeId;
+  final String realUrl;
+  final String categoryName;
+  final String brandName;
+  final String colorName;
+  final String sizeName;
+
+  Cloth({required this.id, required this.name, required this.image, required this.isDirty, required this.userId, required this.colorId, required this.brandId, required this.categoryId, required this.createdAt, required this.updatedAt, required this.sizeId, required this.realUrl, required this.categoryName, required this.brandName, required this.colorName, required this.sizeName});
+
+  factory Cloth.fromJson(Map<String, dynamic> json) {
+    return Cloth(
+      id: json['id'],
+      name: json['name'],
+      image: json['image'],
+      isDirty: json['is_dirty'],
+      userId: json['user_id'],
+      colorId: json['color_id'],
+      brandId: json['brand_id'],
+      categoryId: json['category_id'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      sizeId: json['size_id'],
+      realUrl: json['real_url'],
+      categoryName: json['category']?['name'] ?? 'Non spécifié',
+      brandName: json['brand']?['name'] ?? 'Non spécifié',
+      colorName: json['color']?['name'] ?? 'Non spécifié',
+      sizeName: json['size']?['name'] ?? 'Non spécifié',
+    );
+  }
+}
 
 class Dressing extends StatefulWidget {
   const Dressing({Key? key}) : super(key: key);
@@ -8,14 +120,117 @@ class Dressing extends StatefulWidget {
 }
 
 class _DressingState extends State<Dressing> {
-  String? selectedParentCategory;
-  String? selectedChildCategory;
+  List<Category>? categories;
+  List<SubCategory> subCategories = [];
+
+  String? selectedCategory;
+
+  String? selectedCategoryId;
+  String? selectedSubCategoryId;
+
+  bool isLoading = false;
+
+  List<Cloth>? _clothes;
+
+  File? _image;
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    selectedParentCategory = null;
-    selectedChildCategory = null;
+    chercherCategories();
+    print('init');
+  }
+
+  Future<void> chercherCategories() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/categories');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    print(response.statusCode);
+    if (response.statusCode == 200) {
+      setState(() {
+        isLoading = true;
+      });
+      print('200Dressing');
+      var jsonResponse = jsonDecode(response.body);
+      setState(() {
+        categories = (jsonResponse as List)
+            .map((item) => Category.fromJson(item))
+            .toList();
+      });
+      setState(() {
+        isLoading = false;
+      });
+    }  else {
+      print('Failed to load categories');
+    }
+  }
+
+  Future<List<Cloth>> fetchClothes(int categoryId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/category/$categoryId');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      print('200Clothes');
+      var data = jsonDecode(response.body);
+      if (data['clothes'] != null) {
+        var clothesList = data['clothes'] as List;
+        _clothes = clothesList.map((i) => Cloth.fromJson(i)).cast<Cloth>().toList();
+      }
+
+      // Introduce an artificial delay
+      await Future.delayed(const Duration(seconds: 2));
+
+      return _clothes!;
+    } else {
+      throw Exception('Failed to load clothes');
+    }
+  }
+
+  Future<List<Cloth>> fetchSubCategoryClothes(int subCategoryId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/sub-category/$subCategoryId');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      print('200SubCategoryClothes');
+      var data = jsonDecode(response.body);
+      if (data['clothes'] != null) {
+        var clothesList = data['clothes'] as List;
+        _clothes = clothesList.map((i) => Cloth.fromJson(i)).cast<Cloth>().toList();
+      }
+
+      // Introduce an artificial delay
+      await Future.delayed(const Duration(seconds: 2));
+
+      return _clothes!;
+    } else {
+      throw Exception('Failed to load sub-category clothes');
+    }
   }
 
   @override
@@ -24,309 +239,226 @@ class _DressingState extends State<Dressing> {
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         title: const Text('Dressing'),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              // Ouvrir la page d'ajout de vêtement
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddCloth()),
+              );
+            },
+          )
+        ],
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: parentCategories.keys.map((parentCategory) {
-                return GestureDetector(
-                  onTap: () {
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'Catégories',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Wrap(
+            alignment: WrapAlignment.start,
+            spacing: 8.0, // space between rows
+            runSpacing: 4.0, // space between lines
+            children: categories!.map((category) {
+              return SizedBox(
+                width: 120.0,
+                height: 40.0,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    List<Cloth> clothes = await fetchClothes(category.id);
                     setState(() {
-                      selectedParentCategory = parentCategory;
-                      selectedChildCategory = null;
+                      _clothes = clothes;
+                      subCategories = category.subCategories;
+                      selectedCategoryId = category.id.toString();
+                      selectedSubCategoryId = null; // Reset the selected sub-category
                     });
+                    selectedCategory = category.name.toLowerCase();
                   },
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 80),
-                    child: Card(
-                      elevation: 2,
-                      color: selectedParentCategory == parentCategory
-                          ? Colors.green[400]
-                          : Colors.grey[150],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: selectedParentCategory == parentCategory
-                              ? Colors.green[400]!
-                              : Colors.transparent,
-                          width: 2,
-                        ),
+                  style: ElevatedButton.styleFrom(
+                    primary: selectedCategoryId == category.id.toString() // Use toString() if id is int
+                        ? Colors.white
+                        : const Color.fromRGBO(79, 125, 88, 1),
+                    onPrimary: selectedCategoryId == category.id.toString() // Use toString() if id is int
+                        ? const Color.fromRGBO(79, 125, 88, 1)
+                        : Colors.white,
+                    side: const BorderSide(
+                      color: Color.fromRGBO(79, 125, 88, 1),
+                    ),
+                  ),
+                  child: Text(
+                    category.name,
+                    style: const TextStyle(fontSize: 16.0),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+          ),
+          const Divider(
+            height: 10,
+            thickness: 1.5,
+            indent: 20,
+            endIndent: 20,
+          ),
+          const Padding(padding: EdgeInsets.all(8.0)),
+          if (subCategories.isNotEmpty)
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8.0, // space between rows
+              runSpacing: 4.0, // space between lines
+              children: subCategories.map((subCategory) {
+                return SizedBox(
+                  width: 120.0,
+                  height: 40.0,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      List<Cloth> clothes = await fetchSubCategoryClothes(subCategory.id);
+                      setState(() {
+                        _clothes = clothes;
+                        selectedSubCategoryId = subCategory.id.toString();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: selectedSubCategoryId == subCategory.id.toString() // Use toString() if id is int
+                          ? Colors.white
+                          : const Color.fromRGBO(79, 125, 88, 1),
+                      onPrimary: selectedSubCategoryId == subCategory.id.toString() // Use toString() if id is int
+                          ? const Color.fromRGBO(79, 125, 88, 1)
+                          : Colors.white,
+                      side: const BorderSide(
+                        color: Color.fromRGBO(79, 125, 88, 1),
                       ),
-                      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Center(
-                          child: Text(
-                            parentCategory,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
+                    ),
+                    child: Text(
+                      subCategory.name,
+                      style: const TextStyle(fontSize: 16.0),
                     ),
                   ),
                 );
               }).toList(),
             ),
-          ),
-
-          if (selectedParentCategory != null)
-            Container(
-              margin: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.05),
-              width: MediaQuery.of(context).size.width * 0.4,
-              child: const Divider(height: 24, thickness: 1, color: Colors.grey),
-            ),
-
-          if (selectedParentCategory != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 8, right: 8, top: 0),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: parentCategories[selectedParentCategory]!
-                    .keys
-                    .map((childCategory) {
+          const Padding(padding: EdgeInsets.all(8.0)),
+          if (_clothes == null)
+            const Expanded(
+              child: Center(child: Text('Vous n\'avez pas sélectionné de catégorie')),
+            )
+          else if (_clothes!.isEmpty)
+            const Expanded(
+              child: Center(child: Text('Pas de vêtement dans cette catégorie')),
+            )
+          else
+            Flexible(
+              child: GridView.builder(
+                itemCount: _clothes?.length ?? 0, // Nombre total d'éléments
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // Nombre d'éléments par ligne
+                  childAspectRatio: 1, // Ratio pour la taille des éléments
+                ),
+                itemBuilder: (BuildContext context, int index) {
                   return GestureDetector(
                     onTap: () {
-                      setState(() {
-                        selectedChildCategory = childCategory;
-                      });
-                    },
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 120),
-                      child: Card(
-                        elevation: 2,
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: selectedChildCategory == childCategory
-                                ? Colors.green[400]!
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: Center(
-                            child: Text(
-                              childCategory,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            content: SingleChildScrollView(
+                              child: ListBody(
+                                children: <Widget>[
+                                  Hero(
+                                    tag: 'popupImage${_clothes![index].id}',
+                                    child: Image.network(_clothes![index].realUrl, fit: BoxFit.cover),
+                                  ),
+                                  SizedBox(height: 20),
+                                  Text(
+                                    'Nom : ${_clothes![index].name}',
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Catégorie : ${_clothes![index].categoryName}',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Marque : ${_clothes![index].brandName}',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Couleur : ${_clothes![index].colorName}',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Taille : ${_clothes![index].sizeName}',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                                  ),
+                                ],
                               ),
                             ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text(
+                                  'Fermer',
+                                  style: TextStyle(
+                                    color: Color.fromRGBO(79, 125, 88, 1),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(_clothes![index].realUrl),
+                            fit: BoxFit.cover,
                           ),
+                        ),
+                        child: Image.network(
+                          _clothes![index].realUrl,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: Color.fromRGBO(79, 125, 88, 1), // Vert
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
                   );
-                }).toList(),
-            ),
-          ),
-          selectedChildCategory == null
-              ? const Expanded(
-            child: Center(
-              child: Text("Vous n'avez pas sélectionné de catégorie"),
-            ),
-          ) : Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.8,
+                },
               ),
-              itemCount: parentCategories[selectedParentCategory]![selectedChildCategory]!.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => _openDialog(
-                      context,
-                      parentCategories[selectedParentCategory]![selectedChildCategory]![index],
-                      'name',
-                      'brand',
-                      'category',
-                      'color',
-                      'cleanliness'
-                  ),
-                  child: Image.asset(
-                    parentCategories[selectedParentCategory]![selectedChildCategory]![index],
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
             ),
-          ),
         ],
       ),
     );
   }
-
-  void _openDialog(BuildContext context, String imageUrl, String name, String brand, String category, String color, String cleanliness) {
-    final nameController = TextEditingController(text: name);
-    final brandController = TextEditingController(text: brand);
-    final categoryController = TextEditingController(text: category);
-    final colorController = TextEditingController(text: color);
-    final cleanlinessController = TextEditingController(text: cleanliness);
-
-    bool isEditing = false;  // <-- Initialize it outside of the builder
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              contentPadding: EdgeInsets.zero,
-              content: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(20),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          AspectRatio(
-                            aspectRatio: 1.0,
-                            child: Image.asset(imageUrl, fit: BoxFit.cover),
-                          ),
-                          SizedBox(height: 10),
-                          if (isEditing)
-                            TextFormField(
-                              controller: nameController,
-                              decoration: const InputDecoration(
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.green)
-                                  )
-                              ),
-                            )
-                          else
-                            Text('Nom: $name'),
-                          if (isEditing)
-                            TextFormField(
-                              controller: brandController,
-                              decoration: const InputDecoration(
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.green)
-                                  )
-                              ),
-                            )
-                          else
-                            Text('Marque: $brand'),
-                          if (isEditing)
-                            TextFormField(
-                              controller: categoryController,
-                              decoration: const InputDecoration(
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.green)
-                                  )
-                              ),
-                            )
-                          else
-                            Text('Catégorie: $category'),
-                          if (isEditing)
-                            TextFormField(
-                              controller: colorController,
-                              decoration: const InputDecoration(
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.green)
-                                  )
-                              ),
-                            )
-                          else
-                            Text('Couleur: $color'),
-                          if (isEditing)
-                            TextFormField(
-                              controller: cleanlinessController,
-                              decoration: const InputDecoration(
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.green)
-                                  )
-                              ),
-                            )
-                          else
-                            Text('État de propreté: $cleanliness'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: Icon(isEditing ? Icons.check : Icons.edit),
-                      onPressed: () {
-                        setState(() {
-                          if (isEditing) {
-                            name = nameController.text;
-                            brand = brandController.text;
-                            category = categoryController.text;
-                            color = colorController.text;
-                            cleanliness = cleanlinessController.text;
-                            // Implement your update logic here
-                          }
-                          isEditing = !isEditing;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-
-
-  final Map<String, Map<String, List<String>>> parentCategories = {
-    'Haut': {
-      'T-shirts': [
-        'assets/images/tshirt.png',
-        'assets/images/tshirt.png',
-        'assets/images/tshirt.png',
-        'assets/images/tshirt.png',
-      ],
-      'Vestes': [
-        'assets/images/tshirt1.png',
-        'assets/images/tshirt2.png',
-        'assets/images/tshirt3.png',
-        'assets/images/tshirt3.png',
-      ],
-      'Chemises': [
-        'assets/images/chemise1.png',
-        'assets/images/chemise2.png',
-        'assets/images/chemise3.png',
-      ],
-      'Polos': [
-        'assets/images/polo1.png',
-        'assets/images/polo2.png',
-        'assets/images/polo3.png',
-      ],
-    },
-    'Bas': {
-      'Pantalons': [
-        'assets/images/pantalon1.png',
-        'assets/images/pantalon2.png',
-        'assets/images/pantalon3.png',
-      ],
-      'Jeans': [
-        'assets/images/jean1.png',
-        'assets/images/jean2.png',
-        'assets/images/jean3.png',
-      ],
-    }
-  };
 
 }
