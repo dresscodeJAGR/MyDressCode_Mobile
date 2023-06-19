@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import 'addCloth.dart';
+
 class Category {
   final int id;
   final String name;
@@ -231,85 +233,6 @@ class _DressingState extends State<Dressing> {
     }
   }
 
-  void _openAddClothForm(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Ajouter un vêtement"),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Form(
-                  // L'attribut "key" pour le Form
-                  key: _formKey,
-                  child: Column(
-                    children: <Widget>[
-                      TextFormField(
-                        decoration: InputDecoration(labelText: 'Nom'),
-                        // Validation
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Veuillez entrer un nom';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        icon: Icon(Icons.photo_library),
-                        label: Text('Sélectionner une image'),
-                        onPressed: () async {
-                          final ImagePicker _picker = ImagePicker();
-                          final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
-                          setState(() {
-                            _image = File(image!.path);
-                          });
-                        },
-                      ),
-                      if (_image != null)
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.file(_image!),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text(
-                'Annuler',
-                style: TextStyle(
-                  color: Color.fromRGBO(79, 125, 88, 1),
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text(
-                'Ajouter',
-                style: TextStyle(
-                  color: Color.fromRGBO(79, 125, 88, 1),
-                ),
-              ),
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -320,8 +243,11 @@ class _DressingState extends State<Dressing> {
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
-              // Fonction pour ouvrir le formulaire
-              _openAddClothForm(context);
+              // Ouvrir la page d'ajout de vêtement
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddCloth()),
+              );
             },
           )
         ],
@@ -484,10 +410,10 @@ class _DressingState extends State<Dressing> {
                             actions: <Widget>[
                               TextButton(
                                 child: const Text(
-                                    'Fermer',
-                                    style: TextStyle(
-                                      color: Color.fromRGBO(79, 125, 88, 1),
-                                    ),
+                                  'Fermer',
+                                  style: TextStyle(
+                                    color: Color.fromRGBO(79, 125, 88, 1),
+                                  ),
                                 ),
                                 onPressed: () {
                                   Navigator.of(context).pop();
@@ -534,7 +460,4 @@ class _DressingState extends State<Dressing> {
       ),
     );
   }
-
-
-
 }
