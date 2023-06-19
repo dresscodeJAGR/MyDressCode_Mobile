@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import '../../pages/outfitCreate.dart';
@@ -24,8 +25,19 @@ class _OutfitsState extends State<Outfits> {
   }
 
   fetchOutfits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
     var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits');
-    var response = await http.get(url);
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print(response.body);
 
     if (response.statusCode == 200) {
       var jsonResponse = jsonDecode(response.body);
@@ -36,40 +48,12 @@ class _OutfitsState extends State<Outfits> {
       });
     } else {
       print('Failed to load outfits');
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
-  void confirmationSuppression(int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Supprimer l'outfit"),
-          content: const Text("Êtes-vous sûr de vouloir supprimer cet outfit ?"),
-          actions: [
-            TextButton(
-              child: const Text("Oui"),
-              style: TextButton.styleFrom(
-                primary: Colors.green,
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text("Non"),
-              style: TextButton.styleFrom(
-                primary: Colors.red,
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +126,38 @@ class _OutfitsState extends State<Outfits> {
     );
   }
 
+  void confirmationSuppression(int index, String outfitName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Supprimer l'outfit"),
+          content: Text("Êtes-vous sûr de vouloir supprimer l'outfit '" + outfitName + "' ?"),
+          actions: [
+            TextButton(
+              child: const Text("Oui"),
+              style: TextButton.styleFrom(
+                primary: Colors.green,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text("Non"),
+              style: TextButton.styleFrom(
+                primary: Colors.red,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildOutfit(double height, int index) {
     double imageSize = height * 0.25; // 25% de la hauteur disponible
     var outfit = outfits[index];
@@ -158,13 +174,32 @@ class _OutfitsState extends State<Outfits> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: outfit['clothings'].map<Widget>((clothing) {
-                return Image.network(
-                  clothing['real_url'],
-                  width: imageSize,
-                  height: imageSize,
-                );
-              }).toList(),
+              children: [
+                Text(
+                  outfit['name'],
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                ...outfit['clothings'].map<Widget>((clothing) {
+                  return Image.network(
+                    clothing['real_url'],
+                    width: imageSize,
+                    height: imageSize,
+                    loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: Colors.green,
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ],
             ),
           ),
         ),
@@ -173,10 +208,13 @@ class _OutfitsState extends State<Outfits> {
           right: 8,
           child: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () => confirmationSuppression(index),
+            onPressed: () => confirmationSuppression(index, outfit['name']),
           ),
         ),
       ],
     );
   }
+
+
+
 }

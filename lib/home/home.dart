@@ -4,6 +4,7 @@ import 'package:mdc/pages/rechercheUtilisateur.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
@@ -14,6 +15,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   String userName = "";
   var dailyOutfit = [];
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -48,6 +50,10 @@ class _HomeState extends State<Home> {
   }
 
   fetchDailyOutfit() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
@@ -65,6 +71,7 @@ class _HomeState extends State<Home> {
       var outfit = jsonResponse['outfit']['clothings'];
       setState(() {
         dailyOutfit = outfit;
+        isLoading = false;   // Stop the loading indicator
       });
 
       print('Daily Outfit: $dailyOutfit');
@@ -74,15 +81,29 @@ class _HomeState extends State<Home> {
     }
   }
 
+
   Row buildOutfitRow() {
-    List<Widget> items = [];
-    for (var item in dailyOutfit) {
-      items.add(_buildOutfitItem(imageUrl: item['real_url']));
+    if (isLoading) {
+      // Show loading indicator while the images are loading
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          CircularProgressIndicator(
+            color: Color.fromRGBO(79, 125, 88, 1),
+          ),
+        ],
+      );
+    } else {
+      // Show the images when they have loaded
+      List<Widget> items = [];
+      for (var item in dailyOutfit) {
+        items.add(_buildOutfitItem(imageUrl: item['real_url']));
+      }
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: items,
+      );
     }
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: items,
-    );
   }
 
   @override
@@ -128,43 +149,21 @@ class _HomeState extends State<Home> {
                   ],
                 ),
               ),
-              SizedBox(height: 16),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
-                elevation: 4.0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Sélection du jour',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      buildOutfitRow(),
-                    ],
-                  ),
-                ),
-              ),
               const SizedBox(height: 16),
-              Container(
+              buildDailyOutfitCard(),  // Here we use the updated Card widget
+              const SizedBox(height: 16),
+              SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _navigateToRechercheUtilisateur,
-                  child: const Text('Rechercher un utilisateur'),
                   style: ElevatedButton.styleFrom(
-                    primary: Color.fromRGBO(79, 125, 88, 1),
+                    primary: const Color.fromRGBO(79, 125, 88, 1),
                     textStyle: const TextStyle(fontSize: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                   ),
+                  child: const Text('Rechercher un utilisateur'),
                 ),
               ),
             ],
@@ -203,5 +202,52 @@ class _HomeState extends State<Home> {
         ),
       ),
     );
+  }
+
+  Card buildDailyOutfitCard() {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      elevation: 4.0,
+      child: Stack(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sélection du jour',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                buildOutfitRow(),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child:
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _refreshDailyOutfit,
+              color: const Color.fromRGBO(79, 125, 88, 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  void _refreshDailyOutfit() {
+    setState(() {
+      fetchDailyOutfit();
+    });
   }
 }

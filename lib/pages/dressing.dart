@@ -460,5 +460,4 @@ class _DressingState extends State<Dressing> {
       ),
     );
   }
-
 }
