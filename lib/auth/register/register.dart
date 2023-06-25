@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../main.dart';
 
@@ -13,8 +18,12 @@ class _RegisterState extends State<Register> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _pseudoController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
+  String _response = '';
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +71,17 @@ class _RegisterState extends State<Register> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 20.0),
+                      _buildTextField(
+                        controller: _pseudoController,
+                        labelText: 'Pseudo',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Merci de rentrer un pseudo";
+                          }
+                          return null;
+                        },
+                      ),
                       const SizedBox(height: 16.0),
                       _buildTextField(
                         controller: _passwordController,
@@ -94,13 +114,50 @@ class _RegisterState extends State<Register> {
                       ),
                       const SizedBox(height: 16.0),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            // Add sign up logic here
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => const MainWidget()),
-                            );
+                            try {
+                              var url = Uri.parse('https://mdc.silvy-leligois.fr/api/register');
+                              var response = await http.post(
+                                url,
+                                headers: <String, String>{
+                                  'Content-Type': 'application/json; charset=UTF-8',
+                                },
+                                body: jsonEncode(<String, String>{
+                                  'email': _emailController.text,
+                                  'pseudo': _emailController.text,
+                                  'password': _passwordController.text,
+                                  'password_confirmation': _confirmPasswordController.text,
+                                  'description': _descriptionController.text,
+                                }),
+                              );
+
+                              setState(() {
+                                _response = response.statusCode.toString();
+                              });
+
+                              if (response.statusCode == 201) {
+                                var jsonResponse = jsonDecode(response.body);
+                                String token = jsonResponse['token'];
+
+                                SharedPreferences prefs = await SharedPreferences.getInstance();
+                                await prefs.setString('token', token);
+
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const MainWidget()),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Une erreur est survenue. Veuillez réessayer.')),
+                                );
+                              }
+                            }catch (e) {
+                              print('Erreur lors de l\'enregistrement: $e');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Une erreur s\'est produite lors de l\'enregistrement. Veuillez réessayer.')),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
