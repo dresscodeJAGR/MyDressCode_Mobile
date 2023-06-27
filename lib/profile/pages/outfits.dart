@@ -61,56 +61,84 @@ class _OutfitsState extends State<Outfits> {
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         title: const Text("Outfits"),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return CarouselSlider.builder(
-                  itemCount: outfits.length,
-                  itemBuilder: (context, index, realIndex) {
-                    return _buildOutfit(constraints.maxHeight * 1, index);
-                  },
-                  options: CarouselOptions(
-                    height: constraints.maxHeight * 0.9,
-                    viewportFraction: 0.65,
-                    enlargeCenterPage: false,
-                    enableInfiniteScroll: true,
-                    autoPlay: false,
-                    onPageChanged: (index, reason) {
-                      setState(() {
-                        _current = index;
-                      });
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : outfits.isEmpty
+            ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text("Vous n'avez pas encore de tenue, voulez-vous en créer une ?"),
+              SizedBox(height: 20.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: const Color.fromRGBO(79, 125, 88, 1),
+                  onPrimary: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32.0),
+                  ),
+                ),
+                child: Text('Créer une tenue'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OutfitCreate(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        )
+            : Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return CarouselSlider.builder(
+                    itemCount: outfits.length,
+                    itemBuilder: (context, index, realIndex) {
+                      return _buildOutfit(constraints.maxHeight * 1, index);
                     },
-                  ),
-                );
-              },
+                    options: CarouselOptions(
+                      height: constraints.maxHeight * 0.9,
+                      viewportFraction: 0.65,
+                      enlargeCenterPage: false,
+                      enableInfiniteScroll: true,
+                      autoPlay: false,
+                      onPageChanged: (index, reason) {
+                        setState(() {
+                          _current = index;
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 30.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: outfits.map<Widget>((outfit) {
-                int index = outfits.indexOf(outfit);
-                return Container(
-                  width: _current == index ? 16.0 : 12.0,
-                  height: _current == index ? 16.0 : 12.0,
-                  margin: const EdgeInsets.symmetric(horizontal: 3.0),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _current == index
-                        ? const Color.fromRGBO(79, 125, 88, 1)
-                        : const Color.fromRGBO(79, 125, 88, 0.4),
-                  ),
-                );
-              }).toList(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 30.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: outfits.map<Widget>((outfit) {
+                  int index = outfits.indexOf(outfit);
+                  return Container(
+                    width: _current == index ? 16.0 : 12.0,
+                    height: _current == index ? 16.0 : 12.0,
+                    margin: const EdgeInsets.symmetric(horizontal: 3.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _current == index
+                          ? const Color.fromRGBO(79, 125, 88, 1)
+                          : const Color.fromRGBO(79, 125, 88, 0.4),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
