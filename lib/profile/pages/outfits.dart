@@ -154,20 +154,42 @@ class _OutfitsState extends State<Outfits> {
     );
   }
 
-  void confirmationSuppression(int index, String outfitName) {
+  void confirmationSuppression(int index, String outfitName, int id) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Supprimer l'outfit"),
-          content: Text("Êtes-vous sûr de vouloir supprimer l'outfit '" + outfitName + "' ?"),
+          title: Text("Supprimer l'outfit " + id.toString()),
+          content: Text("Êtes-vous sûr de vouloir supprimer cet outfit ?"),
           actions: [
             TextButton(
               child: const Text("Oui"),
               style: TextButton.styleFrom(
                 primary: Colors.green,
               ),
-              onPressed: () {
+              onPressed: () async {
+                try{
+                  final prefs = await SharedPreferences.getInstance();
+                  final token = prefs.getString('token') ?? '';
+                  var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits/$id');
+                  var response = await http.delete(url,
+                    headers: <String, String>{
+                      'Content-Type': 'application/json; charset=UTF-8',
+                      'Authorization': 'Bearer $token',
+                    });
+
+                  if (response.statusCode == 200) {
+                    print('Outfit supprimé avec succés');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('L\'outfit a bien été supprimé')),
+                    );
+                  }
+                } catch (e) {
+                  print('Erreur lors de la suppression: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Une erreur s\'est produite lors de la suppression. Veuillez réessayer.')),
+                  );
+                }
                 Navigator.of(context).pop();
               },
             ),
@@ -236,7 +258,7 @@ class _OutfitsState extends State<Outfits> {
           right: 8,
           child: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () => confirmationSuppression(index, outfit['name']),
+            onPressed: () => confirmationSuppression(index, outfit['name'], outfit['id']),
           ),
         ),
       ],
