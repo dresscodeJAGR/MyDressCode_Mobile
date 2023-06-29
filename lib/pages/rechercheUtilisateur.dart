@@ -1,7 +1,28 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mdc/pages/profilUtilisateur.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import '../home/home.dart';
+
+class User {
+  final int id;
+  final String pseudo;
+  final String email;
+  final String profilePicture;
+
+  User({required this.id, required this.pseudo, required this.email, required this.profilePicture});
+
+  Map<String, String> toMap() {
+    return {
+      'id': this.id.toString(),
+      'pseudo': this.pseudo,
+      'email': this.email,
+      'image': this.profilePicture,
+    };
+  }
+}
 
 class RechercheUtilisateur extends StatefulWidget {
   const RechercheUtilisateur({Key? key}) : super(key: key);
@@ -12,6 +33,46 @@ class RechercheUtilisateur extends StatefulWidget {
 
 class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
   String searchQuery = '';
+  List<Map<String, String>> userList = []; // Define the variable here
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUsers();
+  }
+
+  Future<void> fetchUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/users');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      print('200');
+      var jsonData = json.decode(response.body)['users'];
+      List<Map<String, String>> users = [];
+      for (var userData in jsonData) {
+        int id = userData['id'];
+        String pseudo = userData['pseudo'];
+        String email = userData['email'];
+        String profilePicture = userData['real_profile_picture'];
+        User user = User(id: id, pseudo: pseudo, email: email, profilePicture: profilePicture);
+        users.add(user.toMap());
+      }
+      setState(() {
+        userList = users; // Update userList
+        print("userList: '$userList'");
+      });
+    } else {
+      throw Exception('Failed to load users');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +114,7 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
             child: ListView.builder(
               itemCount: userList.length,
               itemBuilder: (context, index) {
-                if (searchQuery.isEmpty || userList[index]['name']!.toLowerCase().contains(searchQuery.toLowerCase())) {
+                if (searchQuery.isEmpty || userList[index]['pseudo']!.toLowerCase().contains(searchQuery.toLowerCase())) {
                   return _buildUserCard(userList[index]);
                 } else {
                   return const SizedBox.shrink();
@@ -68,98 +129,56 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
 
   Widget _buildUserCard(Map<String, String> user) {
     return InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfilUtilisateur(
-                user: user,
-              ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfilUtilisateur(
+              //user: user,
+              userId: int.parse(user['id']!),
             ),
-          );
-        },
-    child: Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        leading: CircleAvatar(
-          backgroundImage: AssetImage(user['image']!),
-          radius: 24.0,
-          backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+          ),
+        );
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
         ),
-        title: Text(
-          user['name']!,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          height: 120.0,
+          child: Row(
+            children: [
+              Container(
+                width: 100.0,
+                height: 100.0,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Color.fromRGBO(79, 125, 88, 1),
+                    width: 5.0,
+                  ),
+                  borderRadius: BorderRadius.circular(50.0),
+                  image: DecorationImage(
+                    image: NetworkImage(user['image']!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              SizedBox(width: 16.0),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    user['pseudo']!,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
-
-  List<Map<String, String>> userList = [
-    {
-      'name': 'Alice Johnson',
-      'image': 'assets/images/user1.jpg',
-    },
-    {
-      'name': 'Bob Martin',
-      'image': 'assets/images/user2.jpg',
-    },
-    {
-      'name': 'Cathy Smith',
-      'image': 'assets/images/user3.jpg',
-    },
-    {
-      'name': 'David Brown',
-      'image': 'assets/images/user4.jpg',
-    },
-    {
-      'name': 'Eva Turner',
-      'image': 'assets/images/user5.jpg',
-    },
-    {
-      'name': 'Frank Adams',
-      'image': 'assets/images/user6.jpg',
-    },
-    {
-      'name': 'Grace Thompson',
-      'image': 'assets/images/user7.jpg',
-    },
-    {
-      'name': 'Henry White',
-      'image': 'assets/images/user8.jpg',
-    },
-    {
-      'name': 'Irene Walker',
-      'image': 'assets/images/user9.jpg',
-    },
-    {
-      'name': 'Jack Taylor',
-      'image': 'assets/images/user10.jpg',
-    },
-    {
-      'name': 'Katie Green',
-      'image': 'assets/images/user11.jpg',
-    },
-    {
-      'name': 'Luke Hall',
-      'image': 'assets/images/user12.jpg',
-    },
-    {
-      'name': 'Mia Scott',
-      'image': 'assets/images/user13.jpg',
-    },
-    {
-      'name': 'Nathan Young',
-      'image': 'assets/images/user14.jpg',
-    },
-    {
-      'name': 'Olivia King',
-      'image': 'assets/images/user15.jpg',
-    },
-  ];
 
 }
