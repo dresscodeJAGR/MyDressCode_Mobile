@@ -54,6 +54,27 @@ class _OutfitsState extends State<Outfits> {
     }
   }
 
+  void deleteOutfit(int outfitId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits/$outfitId');
+    var response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Outfit deleted');
+      fetchOutfits();
+    } else {
+      print('Failed to delete outfit');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,30 +188,9 @@ class _OutfitsState extends State<Outfits> {
               style: TextButton.styleFrom(
                 primary: Colors.green,
               ),
-              onPressed: () async {
-                try{
-                  final prefs = await SharedPreferences.getInstance();
-                  final token = prefs.getString('token') ?? '';
-                  var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits/$id');
-                  var response = await http.delete(url,
-                    headers: <String, String>{
-                      'Content-Type': 'application/json; charset=UTF-8',
-                      'Authorization': 'Bearer $token',
-                    });
-
-                  if (response.statusCode == 200) {
-                    print('Outfit supprimé avec succés');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('L\'outfit a bien été supprimé')),
-                    );
-                  }
-                } catch (e) {
-                  print('Erreur lors de la suppression: $e');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Une erreur s\'est produite lors de la suppression. Veuillez réessayer.')),
-                  );
-                }
-                Navigator.of(context).pop();
+              onPressed: () {
+                deleteOutfit(outfits[index]['id']);  // Delete the outfit
+                Navigator.of(context).pop();  // Close the dialog box
               },
             ),
             TextButton(
@@ -199,7 +199,7 @@ class _OutfitsState extends State<Outfits> {
                 primary: Colors.red,
               ),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop();  // Close the dialog box
               },
             ),
           ],
