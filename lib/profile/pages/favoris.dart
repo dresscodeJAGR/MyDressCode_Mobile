@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class Favoris extends StatefulWidget {
   const Favoris({Key? key}) : super(key: key);
@@ -10,8 +14,78 @@ class Favoris extends StatefulWidget {
 
 class _FavorisState extends State<Favoris> {
   int _current = 0;
-  List<bool> _favoriteStars = List.generate(3, (index) => true);
-  List<bool> _favoriteColors = List.generate(3, (index) => true);
+  List<Map<String, dynamic>> outfits = [];
+  bool isLoading = true;
+  List<bool> _favoriteStars = [];
+  List<bool> _favoriteColors = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchOutfits();
+    _favoriteStars = List.generate(outfits.length, (index) => true);
+    _favoriteColors = List.generate(outfits.length, (index) => true);
+  }
+
+  fetchOutfits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits');
+    var response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      List<dynamic> outfitsList = jsonResponse['outfits'];
+      List<Map<String, dynamic>> outfitsMaps = outfitsList.map((outfit) => Map<String, dynamic>.from(outfit)).toList();
+
+      setState(() {
+        outfits = outfitsMaps;
+        _favoriteStars = List.generate(outfits.length, (index) => true);
+        _favoriteColors = List.generate(outfits.length, (index) => true);
+        isLoading = false;
+      });
+    } else {
+      print('Failed to load outfits');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void removeFavoriteOutfit(int outfitId, int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/favorize/outfit/$outfitId');
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'action': 'remove',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Outfit removed from favorites');
+      setState(() {
+        outfits.removeAt(index);
+        _favoriteStars.removeAt(index);
+        _favoriteColors.removeAt(index);
+      });
+    } else {
+      print('Failed to remove outfit from favorites');
+    }
+  }
 
   void _toggleFavoriteStar(int index) {
     if (_favoriteStars[index]) {
@@ -25,23 +99,24 @@ class _FavorisState extends State<Favoris> {
               TextButton(
                 child: const Text("Oui"),
                 style: TextButton.styleFrom(
-                  primary: Colors.green, // Couleur du texte du bouton "Oui"
+                  primary: Colors.green, // Text color of "Yes" button
                 ),
                 onPressed: () {
+                  removeFavoriteOutfit(outfits[index]['id'], index);  // Remove the outfit from favorites
                   setState(() {
                     _favoriteStars[index] = !_favoriteStars[index];
                     _favoriteColors[index] = !_favoriteColors[index];
                   });
-                  Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                  Navigator.of(context).pop(); // Close the dialog box
                 },
               ),
               TextButton(
                 child: const Text("Non"),
                 style: TextButton.styleFrom(
-                  primary: Colors.red, // Couleur du texte du bouton "Non"
+                  primary: Colors.red, // Text color of "No" button
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                  Navigator.of(context).pop(); // Close the dialog box
                 },
               ),
             ],
@@ -56,6 +131,7 @@ class _FavorisState extends State<Favoris> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,16 +139,17 @@ class _FavorisState extends State<Favoris> {
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         title: const Text("Favoris"),
       ),
-      body: Column(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return CarouselSlider.builder(
-                  itemCount: 3, // Le nombre d'outfits à afficher
+                  itemCount: outfits.length, // The number of outfits to display
                   itemBuilder: (context, index, realIndex) {
-                    return _buildOutfit(constraints.maxHeight * 1,
-                        index); // Passez l'index à la fonction _buildOutfit
+                    return _buildOutfit(constraints.maxHeight * 1, index); // Pass the index to the _buildOutfit function
                   },
                   options: CarouselOptions(
                     height: constraints.maxHeight * 0.9,
@@ -94,12 +171,12 @@ class _FavorisState extends State<Favoris> {
             padding: const EdgeInsets.only(bottom: 30.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) {
+              children: List.generate(outfits.length, (index) {
                 return Container(
                   width: _current == index ? 16.0 : 12.0,
                   height: _current == index ? 16.0 : 12.0,
                   margin: const EdgeInsets.symmetric(horizontal: 3.0),
-                  // Réduisez la marge ici
+                  // Reduce the margin here
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _current == index
@@ -116,7 +193,9 @@ class _FavorisState extends State<Favoris> {
   }
 
   Widget _buildOutfit(double height, int index) {
-    double imageSize = height * 0.25; // 25% de la hauteur disponible
+    double imageSize = height * 0.25; // 25% of the available height
+    var outfit = outfits[index];
+    var clothings = outfit['clothings'].cast<Map<String, dynamic>>();
     return Stack(
       children: [
         Container(
@@ -128,14 +207,17 @@ class _FavorisState extends State<Favoris> {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Image.asset('assets/images/tshirt.png', width: imageSize,
-                    height: imageSize),
-                Image.asset('assets/images/pantalon.png', width: imageSize,
-                    height: imageSize),
-                Image.asset('assets/images/chaussures.png', width: imageSize,
-                    height: imageSize),
+                const SizedBox(height: 16.0),
+                Text(
+                  outfit['name'],
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16.0),
+                ...outfit['clothings'].map<Widget>((clothing) {
+                  return Image.network(clothing['real_url'], width: imageSize, height: imageSize);
+                }).toList(),
               ],
             ),
           ),
@@ -154,4 +236,5 @@ class _FavorisState extends State<Favoris> {
       ],
     );
   }
+
 }
