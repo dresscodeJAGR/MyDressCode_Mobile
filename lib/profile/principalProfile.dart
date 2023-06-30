@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mdc/profile/pages/favoris.dart';
 import 'package:mdc/profile/pages/outfits.dart';
+import 'package:mdc/profile/pages/settings.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -65,8 +66,13 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
               Icons.settings,
               color: Colors.white,
             ),
-            onPressed: () => {
-
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Settings(),
+                ),
+              );
             },
           )
         ],
