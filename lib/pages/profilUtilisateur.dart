@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class ProfilUtilisateur extends StatefulWidget {
-  final Map<String, dynamic> user;
-  const ProfilUtilisateur({Key? key, required this.user}) : super(key: key);
+  final int userId; // Définir userId comme variable de la classe
+  const ProfilUtilisateur({Key? key, required this.userId}) : super(key: key);
 
   @override
   _ProfilUtilisateurState createState() => _ProfilUtilisateurState();
-}
+  }
 
 class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   Map<String, dynamic> user = {

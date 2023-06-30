@@ -175,13 +175,13 @@ class _OutfitsState extends State<Outfits> {
     );
   }
 
-  void confirmationSuppression(int index, String outfitName) {
+  void confirmationSuppression(int index, String outfitName, int id) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Supprimer l'outfit"),
-          content: Text("Êtes-vous sûr de vouloir supprimer l'outfit '" + outfitName + "' ?"),
+          title: Text("Supprimer l'outfit " + id.toString()),
+          content: Text("Êtes-vous sûr de vouloir supprimer cet outfit ?"),
           actions: [
             TextButton(
               child: const Text("Oui"),
@@ -258,7 +258,7 @@ class _OutfitsState extends State<Outfits> {
           right: 8,
           child: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () => confirmationSuppression(index, outfit['name']),
+            onPressed: () => confirmationSuppression(index, outfit['name'], outfit['id']),
           ),
         ),
       ],

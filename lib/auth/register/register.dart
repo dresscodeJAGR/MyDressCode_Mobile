@@ -125,7 +125,7 @@ class _RegisterState extends State<Register> {
                                 },
                                 body: jsonEncode(<String, String>{
                                   'email': _emailController.text,
-                                  'pseudo': _emailController.text,
+                                  'pseudo': _pseudoController.text,
                                   'password': _passwordController.text,
                                   'password_confirmation': _confirmPasswordController.text,
                                   'description': _descriptionController.text,
