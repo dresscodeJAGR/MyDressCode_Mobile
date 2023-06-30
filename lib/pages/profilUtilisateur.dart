@@ -15,11 +15,15 @@ class ProfilUtilisateur extends StatefulWidget {
 class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   Map<String, dynamic> user = {};
   bool isLoading = true;
+  int nbOutfits = 0;
+  List<bool> _favoriteStars = [];
 
   @override
   void initState() {
     super.initState();
-    getUserDatas();
+    getUserDatas().then((_) {
+      _favoriteStars = List.generate(nbOutfits, (index) => false);
+    });
   }
 
   Future<void> getUserDatas() async {
@@ -38,6 +42,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
         setState(() {
           user = Map<String, dynamic>.from(jsonData);
           isLoading = false;
+          nbOutfits = user['outfits'].length;
         });
         print(user);
       } else {
@@ -48,9 +53,6 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       throw Exception('Erreur lors de la requête HTTP : $error');
     }
   }
-
-
-  List<bool> _favoriteStars = List.generate(3, (index) => false);
 
   void _toggleFavoriteStar(int index) {
     if (_favoriteStars[index]) {
@@ -157,8 +159,8 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   }
 
   Widget buildOutfits() {
-    final outfits = (user['outfits'] ?? []);
-    final outfitsList = (outfits is List) ? outfits : [outfits];
+    final outfits = user['outfits'] ?? [];
+    final outfitsList = outfits is List ? outfits : [outfits];
 
     return SingleChildScrollView(
       child: Column(
@@ -173,6 +175,8 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
               .map<Widget>((MapEntry<int, dynamic> entry) {
             int index = entry.key;
             Map<String, dynamic> outfit = entry.value;
+            List<dynamic> clothings = outfit['clothings'] ?? [];
+
             return Card(
               elevation: 5,
               shape: RoundedRectangleBorder(
@@ -192,10 +196,12 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ...(outfit['real_url'] is List ? outfit['real_url'] : [outfit['real_url']])
-                                .map<Widget>((imageUrl) {
+                            ...clothings
+                                .map<Widget>((dynamic clothing) {
+                              String imageUrl = clothing['real_url'] ?? '';
                               return _buildOutfitItem(imageUrl: imageUrl);
-                            }).toList(),
+                            })
+                                .toList(),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -207,8 +213,8 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                     right: 0,
                     child: IconButton(
                       icon: Icon(
-                        _favoriteStars[index] ? Icons.favorite : Icons.favorite_border,
-                        color: _favoriteStars[index] ? Colors.red : Colors.grey,
+                        _favoriteStars[index] ? Icons.star : Icons.star_border,
+                        color: _favoriteStars[index] ? Colors.yellow : Colors.grey,
                       ),
                       onPressed: () => _toggleFavoriteStar(index),
                     ),
@@ -237,7 +243,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
               borderRadius: BorderRadius.circular(16.0),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: Image.asset(
+                child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
                 ),

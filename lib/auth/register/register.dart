@@ -143,9 +143,10 @@ class _RegisterState extends State<Register> {
                                 SharedPreferences prefs = await SharedPreferences.getInstance();
                                 await prefs.setString('token', token);
 
-                                Navigator.pushReplacement(
+                                Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(builder: (context) => const MainWidget()),
+                                      (Route<dynamic> route) => false,
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
