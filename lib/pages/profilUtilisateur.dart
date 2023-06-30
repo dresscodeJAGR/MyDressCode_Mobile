@@ -1,65 +1,54 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class ProfilUtilisateur extends StatefulWidget {
-  final int userId; // Définir userId comme variable de la classe
+  final int userId;
   const ProfilUtilisateur({Key? key, required this.userId}) : super(key: key);
 
   @override
   _ProfilUtilisateurState createState() => _ProfilUtilisateurState();
-  }
+}
 
 class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
-  Map<String, dynamic> user = {
-    "id": "123",
-    "firstName": "Prénom",
-    "lastName": "Nom",
-    "email": "prenom.nom@example.com",
-    "profileImage": "assets/images/imgProfile.png",
-    "favorites": [
-      {
-        "id": "1",
-        "title": "Article préféré 1",
-        "description": "Description de l'article préféré 1",
-      },
-      {
-        "id": "2",
-        "title": "Article préféré 2",
-        "description": "Description de l'article préféré 2",
-      },
-    ],
-    "outfits": [
-      {
-        "id": "1",
-        "title": "Outfit 1",
-        "description": "Description de l'outfit 1",
-        "images": [
-          "assets/images/tshirt.png",
-          "assets/images/pantalon.png",
-          "assets/images/chaussures.png",
-        ],
-      },
-      {
-        "id": "2",
-        "title": "Outfit 2",
-        "description": "Description de l'outfit 2",
-        "images": [
-          "assets/images/tshirt.png",
-          "assets/images/pantalon.png",
-          "assets/images/chaussures.png",
-        ],
-      },
-      {
-        "id": "3",
-        "title": "Outfit 3",
-        "description": "Description de l'outfit 3",
-        "images": [
-          "assets/images/tshirt.png",
-          "assets/images/pantalon.png",
-          "assets/images/chaussures.png",
-        ],
-      },
-    ],
-  };
+  Map<String, dynamic> user = {};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    getUserDatas();
+  }
+
+  Future<void> getUserDatas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/users/${widget.userId}');
+
+    try {
+      final response = await http.get(url, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token'
+      });
+      if (response.statusCode == 200) {
+        var jsonData = json.decode(response.body)['user'];
+        setState(() {
+          user = Map<String, dynamic>.from(jsonData);
+          isLoading = false;
+        });
+        print(user);
+      } else {
+        isLoading = false;
+        throw Exception('Erreur de chargement des données de l\'utilisateur');
+      }
+    } catch (error) {
+      throw Exception('Erreur lors de la requête HTTP : $error');
+    }
+  }
+
 
   List<bool> _favoriteStars = List.generate(3, (index) => false);
 
@@ -112,7 +101,9 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
         elevation: 15,
         backgroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+      ? Center(child: CircularProgressIndicator(),)
+      : SingleChildScrollView(
         child: Column(
           children: <Widget>[
             const SizedBox(
@@ -130,8 +121,9 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     );
   }
 
-
   Widget buildImageProfile() {
+    String profilePicture = user['real_profile_picture'];
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 30, 0, 10),
@@ -139,23 +131,20 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
           height: 170,
           width: 170,
           decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(
-                  '${user['profileImage']}' ?? 'assets/images/imgProfile.png'),
-              fit: BoxFit.fill,
-            ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(20),),
+            child: profilePicture.isNotEmpty
+                ? Image.network(profilePicture, fit: BoxFit.contain)
+                : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget buildName() {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: Text(
-        '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}',
+        '${user['pseudo'] ?? ''}',
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.black,
@@ -168,13 +157,20 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   }
 
   Widget buildOutfits() {
+    final outfits = (user['outfits'] ?? []);
+    final outfitsList = (outfits is List) ? outfits : [outfits];
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ...
           const SizedBox(height: 10),
-          ...(user['outfits'] ?? []).asMap().entries.map<Widget>((entry) {
+          ...outfitsList
+              .asMap()
+              .entries
+              .where((MapEntry<int, dynamic> entry) => entry.key < _favoriteStars.length)
+              .map<Widget>((MapEntry<int, dynamic> entry) {
             int index = entry.key;
             Map<String, dynamic> outfit = entry.value;
             return Card(
@@ -190,13 +186,14 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          outfit['title'] ?? '',
+                          outfit['name'] ?? '',
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ...(outfit['images'] ?? []).map<Widget>((imageUrl) {
+                            ...(outfit['real_url'] is List ? outfit['real_url'] : [outfit['real_url']])
+                                .map<Widget>((imageUrl) {
                               return _buildOutfitItem(imageUrl: imageUrl);
                             }).toList(),
                           ],
@@ -225,6 +222,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       ),
     );
   }
+
 
 
   Widget _buildOutfitItem({required String imageUrl}) {
