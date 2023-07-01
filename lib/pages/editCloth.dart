@@ -43,7 +43,7 @@ class Subcategory {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is Category &&
+    return other is Subcategory &&
         other.id == id &&
         other.name == name;
   }
@@ -51,6 +51,7 @@ class Subcategory {
   @override
   int get hashCode => id.hashCode ^ name.hashCode;
 }
+
 
 class ColorOption {
   final int id;
@@ -60,6 +61,11 @@ class ColorOption {
     required this.id,
     required this.name,
   });
+
+  @override
+  String toString() {
+    return 'ColorOption{id: $id, name: $name}';
+  }
 }
 
 class Brand {
@@ -70,6 +76,11 @@ class Brand {
     required this.id,
     required this.name,
   });
+
+  @override
+  String toString() {
+    return 'Brand{id: $id, name: $name}';
+  }
 }
 
 class Size {
@@ -80,6 +91,11 @@ class Size {
     required this.id,
     required this.name,
   });
+
+  @override
+  String toString() {
+    return 'Size{id: $id, name: $name}';
+  }
 }
 
 class EditCloth extends StatefulWidget {
@@ -117,7 +133,6 @@ class _EditClothState extends State<EditCloth> {
   @override
   void initState() {
     super.initState();
-    bool _loading = true;
     String clothId = widget.clothData.id.toString();
     fetchInitialData(clothId);
   }
@@ -130,9 +145,11 @@ class _EditClothState extends State<EditCloth> {
       fetchColors(),
     ]);
     await fetchEditCloth(clothId);
-    setState(() {
-      _loading = false;
-    });
+    if(mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   Future<void> fetchEditCloth(clothId) async {
@@ -162,34 +179,24 @@ class _EditClothState extends State<EditCloth> {
                 name: jsonResponse['clothing']['category']['name'],
                 subcategories: [], // Pas de sous-sous-catégories
               ),
-            ], // Ici, on ajoute _selectedSubcategory dans les sous-catégories de _selectedCategory
+            ],
           );
           _selectedSubcategory = _selectedCategory?.subcategories[0]; // Et on défini _selectedSubcategory comme la première (et seule) sous-catégorie de _selectedCategory
 
-          _selectedColorOption = ColorOption(
-            id: jsonResponse['clothing']['color']['id'],
-            name: jsonResponse['clothing']['color']['name'],
-          );
+          int selectedColorId = jsonResponse['clothing']['color']['id'];
+          _selectedColorOption = _colors.firstWhere((colorOption) => colorOption.id == selectedColorId);
 
-          _selectedBrand = Brand(
-            id: jsonResponse['clothing']['brand']['id'],
-            name: jsonResponse['clothing']['brand']['name'],
-          );
-          _selectedSize = Size(
-            id: jsonResponse['clothing']['size']['id'],
-            name: jsonResponse['clothing']['size']['name'],
-          );
+          int selectedBrandId = jsonResponse['clothing']['brand']['id'];
+          _selectedBrand = _brands.firstWhere((brand) => brand.id == selectedBrandId);
+
+          int selectedSizeId = jsonResponse['clothing']['size']['id'];
+          _selectedSize = _sizes.firstWhere((size) => size.id == selectedSizeId);
+
+
           _selectedImage = XFile(
             jsonResponse['clothing']['real_url'],
           );
           _hasImage = true;
-          print(_nameController.text);
-          print(_selectedCategory!.name);
-          print(_selectedSubcategory!.name);
-          print(_selectedColorOption!.name);
-          print(_selectedBrand!.name);
-          print(_selectedSize!.name);
-          print(_selectedImage!.path);
         });
       }
     } else {
@@ -259,12 +266,14 @@ class _EditClothState extends State<EditCloth> {
             name: colorData['name'],
           ));
         }
-        setState(() {
-          _colors = colors;
-          if (_colors.isNotEmpty) {
-            _selectedColorOption = _colors[0]; // initialise with first color option
-          }
-        });
+        if (mounted) { // Vérifie si le widget est monté avant d'appeler setState
+          setState(() {
+            _colors = colors;
+            if (_colors.isNotEmpty) {
+              _selectedColorOption = _colors[0]; // Initialise avec la première option de couleur
+            }
+          });
+        }
       }
     } else {
       throw Exception('Failed to load colors');
@@ -450,7 +459,6 @@ class _EditClothState extends State<EditCloth> {
                     ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<ColorOption>(
-
                     value: _selectedColorOption,
                     decoration: const InputDecoration(
                       labelText: 'Couleur',
@@ -465,16 +473,10 @@ class _EditClothState extends State<EditCloth> {
                     style: const TextStyle(color: Color.fromRGBO(79, 125, 88, 1)),
                     items: _colors.map((colorOption) {
                       return DropdownMenuItem<ColorOption>(
-                        value: colorOption,
+                        value: colorOption, // Use existing reference
                         child: Text(colorOption.name),
                       );
                     }).toList(),
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Veuillez sélectionner une couleur';
-                      }
-                      return null;
-                    },
                     onChanged: (value) {
                       setState(() {
                         _selectedColorOption = value;
@@ -482,7 +484,7 @@ class _EditClothState extends State<EditCloth> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  /*DropdownButtonFormField<Brand>(
+                  DropdownButtonFormField<Brand>(
                   value: _selectedBrand,
                   decoration: const InputDecoration(
                     labelText: 'Marque',
@@ -501,12 +503,6 @@ class _EditClothState extends State<EditCloth> {
                       child: Text(brand.name),
                     );
                   }).toList(),
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Veuillez sélectionner une marque';
-                    }
-                    return null;
-                  },
                   onChanged: (value) {
                     setState(() {
                       _selectedBrand = value;
@@ -533,18 +529,12 @@ class _EditClothState extends State<EditCloth> {
                       child: Text(size.name),
                     );
                   }).toList(),
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Veuillez sélectionner une taille';
-                    }
-                    return null;
-                  },
                   onChanged: (value) {
                     setState(() {
                       _selectedSize = value;
                     });
                   },
-                ),*/
+                ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -582,9 +572,30 @@ class _EditClothState extends State<EditCloth> {
                       child: SizedBox(
                         width: imageWidth,
                         height: imageHeight,
-                        child: Image.network(
+                        child: _selectedImage!.path.startsWith('http')
+                            ? Image.network(
                           _selectedImage!.path,
                           fit: BoxFit.cover,
+                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: const Color.fromRGBO(79, 125, 88, 1), // Vert
+                              ),
+                            );
+                          },
+                        )
+                            : Image.file(
+                          File(_selectedImage!.path),
+                          fit: BoxFit.cover,
+                          errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                            return const Text('Une erreur est survenue lors du chargement de l\'image.');
+                          },
                         ),
                       ),
                     ),
@@ -600,6 +611,7 @@ class _EditClothState extends State<EditCloth> {
 
 
   void submitForm() async {
+
   }
 
   Future<void> selectImage(ImageSource source) async {

@@ -4,37 +4,42 @@ import 'package:http/http.dart' as http;
 import 'package:mdc/auth/login/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Settings extends StatelessWidget {
+class Settings extends StatefulWidget {
+  const Settings({Key? key}) : super(key: key);
+
+  @override
+  _SettingsState createState() => _SettingsState();
+}
+
+class _SettingsState extends State<Settings>  {
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
-          title: Text('Paramètres'),
-        ),
-        body: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.fromLTRB(16, 16, 16, 0), // Légère marge
-              width: double.infinity, // Largeur de la fenêtre
-              child: ElevatedButton(
-                child: Text('Déconnexion'),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+        title: const Text('Paramètres'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0), // Légère marge
+            width: double.infinity, // Largeur de la fenêtre
+            child: ElevatedButton(
                 onPressed: () {
                   logout(context);
                 },
-                style:
-                ElevatedButton.styleFrom(
+                style: ElevatedButton.styleFrom(
                   primary: const Color.fromRGBO(79, 125, 88, 1),
                   onPrimary: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32.0),
                   ),
-                )
-              ),
+                ),
+                child: const Text('Déconnexion')
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -53,9 +58,7 @@ class Settings extends StatelessWidget {
     );
 
     if (response.statusCode == 200) {
-      print('Déconnexion réussie');
       prefs.remove('token');
-
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => Login()),

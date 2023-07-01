@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:mdc/profile/pages/choiceFav.dart';
 import 'package:mdc/profile/pages/favoris.dart';
 import 'package:mdc/profile/pages/outfits.dart';
 import 'package:mdc/profile/pages/settings.dart';
@@ -70,7 +71,7 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => Settings(),
+                  builder: (context) => const Settings(),
                 ),
               );
             },
@@ -111,15 +112,29 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10), // Bords arrondis avec un rayon de 20
             child: userImageUrl.isNotEmpty
-                ? Image.network(userImageUrl, fit: BoxFit.contain)
+                ? Image.network(
+              userImageUrl,
+              fit: BoxFit.contain,
+              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                        : null,
+                    color: Color.fromRGBO(79, 125, 88, 1), // Vert
+                  ),
+                );
+              },
+            )
                 : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
           ),
         ),
       ),
     );
   }
-
-
 
   Widget buildName() {
     return SizedBox(
@@ -227,7 +242,7 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Favoris(),
+                  builder: (context) => ChoiceFav(),
                 ),
               ),
             },
