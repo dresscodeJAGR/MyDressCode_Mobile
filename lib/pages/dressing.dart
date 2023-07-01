@@ -1,12 +1,31 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mdc/pages/editCloth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import 'addCloth.dart';
+
+class ClothData {
+  final int id;
+  final String name;
+  final String categoryName;
+  final String brandName;
+  final String colorName;
+  final String sizeName;
+
+  ClothData({
+    required this.id,
+    required this.name,
+    required this.categoryName,
+    required this.brandName,
+    required this.colorName,
+    required this.sizeName,
+  });
+}
 
 class Category {
   final int id;
@@ -111,6 +130,7 @@ class Cloth {
     );
   }
 }
+
 
 class Dressing extends StatefulWidget {
   const Dressing({Key? key}) : super(key: key);
@@ -232,6 +252,30 @@ class _DressingState extends State<Dressing> {
       throw Exception('Failed to load sub-category clothes');
     }
   }
+
+  deleteCloth(int clothId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    print(clothId);
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits/$clothId');
+    var response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cloth deleted successfully.')),
+      );
+    } else {
+      print('Failed to delete cloth' + response.statusCode.toString());
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -371,10 +415,27 @@ class _DressingState extends State<Dressing> {
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
+                          ClothData clothData = ClothData(
+                            id: _clothes![index].id,
+                            name: _clothes![index].name,
+                            categoryName: _clothes![index].categoryName,
+                            brandName: _clothes![index].brandName,
+                            colorName: _clothes![index].colorName,
+                            sizeName: _clothes![index].sizeName,
+                          );
                           return AlertDialog(
                             content: SingleChildScrollView(
                               child: ListBody(
                                 children: <Widget>[
+                                  TextButton(
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Color.fromRGBO(79, 125, 88, 1),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
                                   Hero(
                                     tag: 'popupImage${_clothes![index].id}',
                                     child: Image.network(_clothes![index].realUrl, fit: BoxFit.cover),
@@ -407,15 +468,33 @@ class _DressingState extends State<Dressing> {
                                 ],
                               ),
                             ),
+
                             actions: <Widget>[
                               TextButton(
                                 child: const Text(
-                                  'Fermer',
+                                  'Modifier',
                                   style: TextStyle(
                                     color: Color.fromRGBO(79, 125, 88, 1),
                                   ),
                                 ),
                                 onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => EditCloth(
+                                      clothData: clothData,
+                                    )),
+                                  );
+                                },
+                              ),
+                              TextButton(
+                                child: const Text(
+                                  'Supprimer',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  deleteCloth(_clothes![index].id);
                                   Navigator.of(context).pop();
                                 },
                               ),
@@ -460,4 +539,5 @@ class _DressingState extends State<Dressing> {
       ),
     );
   }
+
 }

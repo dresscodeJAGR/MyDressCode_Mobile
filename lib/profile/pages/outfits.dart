@@ -17,6 +17,7 @@ class _OutfitsState extends State<Outfits> {
   int _current = 0;
   List outfits = [];
   bool isLoading = true;
+  Map<String, bool> retryImages = {};
 
   @override
   void initState() {
@@ -36,8 +37,6 @@ class _OutfitsState extends State<Outfits> {
         'Authorization': 'Bearer $token',
       },
     );
-
-    print(response.body);
 
     if (response.statusCode == 200) {
       var jsonResponse = jsonDecode(response.body);
@@ -83,14 +82,16 @@ class _OutfitsState extends State<Outfits> {
         title: const Text("Outfits"),
       ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color.fromRGBO(79, 125, 88, 1)),
+        ))
             : outfits.isEmpty
             ? Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text("Vous n'avez pas encore de tenue, voulez-vous en créer une ?"),
-              SizedBox(height: 20.0),
+              const Text("Vous n'avez pas encore de tenue, voulez-vous en créer une ?"),
+              const SizedBox(height: 20.0),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   primary: const Color.fromRGBO(79, 125, 88, 1),
@@ -99,7 +100,7 @@ class _OutfitsState extends State<Outfits> {
                     borderRadius: BorderRadius.circular(32.0),
                   ),
                 ),
-                child: Text('Créer une tenue'),
+                child: const Text('Créer une tenue'),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -230,23 +231,50 @@ class _OutfitsState extends State<Outfits> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 ...outfit['clothings'].map<Widget>((clothing) {
-                  return Image.network(
-                    clothing['real_url'],
-                    width: imageSize,
-                    height: imageSize,
-                    loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      }
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              : null,
-                          color: Colors.green,
-                        ),
-                      );
-                    },
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: imageSize,
+                        height: imageSize,
+                        color: Colors.transparent,
+                      ),
+                      Image.network(
+                        clothing['real_url'],
+                        width: imageSize,
+                        height: imageSize,
+                        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                          if (loadingProgress == null) {
+                            return child;
+                          }
+                          return SizedBox(
+                            width: imageSize,
+                            height: imageSize,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(const Color.fromRGBO(79, 125, 88, 1)),
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          if (!retryImages.containsKey(clothing['real_url']) || !retryImages[clothing['real_url']]!) {
+                            retryImages[clothing['real_url']] = true;
+                            Future.delayed(const Duration(seconds: 2), () {
+                              setState(() {});
+                            });
+                          }
+                          return SizedBox(
+                            width: imageSize,
+                            height: imageSize,
+                            child: const Icon(Icons.error),
+                          );
+                        },
+                      ),
+                    ],
                   );
                 }).toList(),
               ],
