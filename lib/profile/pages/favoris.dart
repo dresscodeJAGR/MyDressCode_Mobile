@@ -31,7 +31,7 @@ class _FavorisState extends State<Favoris> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
-    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits');
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/favorized/outfits');
     var response = await http.get(
       url,
       headers: <String, String>{

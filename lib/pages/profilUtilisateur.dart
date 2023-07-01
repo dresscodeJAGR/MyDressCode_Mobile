@@ -16,13 +16,16 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   Map<String, dynamic> user = {};
   bool isLoading = true;
   int nbOutfits = 0;
+  List<Map<String, dynamic>> outfits = [];
   List<bool> _favoriteStars = [];
 
   @override
   void initState() {
     super.initState();
     getUserDatas().then((_) {
-      _favoriteStars = List.generate(nbOutfits, (index) => false);
+      setState(() {
+        _favoriteStars = List.generate(nbOutfits, (index) => false);
+      });
     });
   }
 
@@ -39,14 +42,17 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       });
       if (response.statusCode == 200) {
         var jsonData = json.decode(response.body)['user'];
+        user = Map<String, dynamic>.from(jsonData);
         setState(() {
-          user = Map<String, dynamic>.from(jsonData);
+          outfits = List<Map<String, dynamic>>.from((user['outfits'] as List).map((outfit) => Map<String, dynamic>.from(outfit)));
           isLoading = false;
           nbOutfits = user['outfits'].length;
         });
         print(user);
       } else {
-        isLoading = false;
+        setState(() {
+          isLoading = false;
+        });
         throw Exception('Erreur de chargement des données de l\'utilisateur');
       }
     } catch (error) {
@@ -54,45 +60,75 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     }
   }
 
-  void _toggleFavoriteStar(int index) {
-    if (_favoriteStars[index]) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Retirer des favoris"),
-            content: const Text("Êtes-vous sûr de vouloir retirer cet outfit de vos favoris ?"),
-            actions: [
-              TextButton(
-                child: const Text("Oui"),
-                style: TextButton.styleFrom(
-                  primary: Colors.green, // Couleur du texte du bouton "Oui"
-                ),
-                onPressed: () {
-                  setState(() {
-                    _favoriteStars[index] = !_favoriteStars[index];
-                  });
-                  Navigator.of(context).pop(); // Fermer la boîte de dialogue
-                },
-              ),
-              TextButton(
-                child: const Text("Non"),
-                style: TextButton.styleFrom(
-                  primary: Colors.red, // Couleur du texte du bouton "Non"
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop(); // Fermer la boîte de dialogue
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } else {
+  Future<void> toggleFavoriteOutfit(int outfitId, int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/favorize/outfit/$outfitId');
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'action': _favoriteStars[index] ? 'remove' : 'add',
+      }),
+    );
+
+    if (response.statusCode == 200) {
       setState(() {
         _favoriteStars[index] = !_favoriteStars[index];
       });
+    } else if (response.statusCode == 404) {
+      print('Outfit not found');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('L\'outfit n\'a pas été trouvé')),
+      );
     }
+    else {
+      print('Failed to toggle favorite outfit');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Une erreur est survenue')),
+      );
+    }
+  }
+
+  void _toggleFavoriteStar(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Ajouter/Retirer des favoris"),
+          content: _favoriteStars[index]
+              ? const Text("Êtes-vous sûr de vouloir ajouter cet outfit à vos favoris ?")
+              : const Text("Êtes-vous sûr de vouloir ajouter cet outfit à vos favoris ?"),
+          actions: [
+            TextButton(
+              child: const Text("Oui"),
+              style: TextButton.styleFrom(
+                primary: Colors.green, // Couleur du texte du bouton "Oui"
+              ),
+              onPressed: () {
+                setState(() {
+                  toggleFavoriteOutfit(outfits[index]['id'], index); // Toggle favorite outfit
+                });
+                Navigator.of(context).pop(); // Fermer la boîte de dialogue
+              },
+            ),
+            TextButton(
+              child: const Text("Non"),
+              style: TextButton.styleFrom(
+                primary: Colors.red, // Couleur du texte du bouton "Non"
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Fermer la boîte de dialogue
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -104,8 +140,10 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
         backgroundColor: Colors.white,
       ),
       body: isLoading
-      ? Center(child: CircularProgressIndicator(),)
-      : SingleChildScrollView(
+          ? Center(
+        child: CircularProgressIndicator(),
+      )
+          : SingleChildScrollView(
         child: Column(
           children: <Widget>[
             const SizedBox(
@@ -133,13 +171,14 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
           height: 170,
           width: 170,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),),
-            child: profilePicture.isNotEmpty
-                ? Image.network(profilePicture, fit: BoxFit.contain)
-                : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
+            borderRadius: BorderRadius.circular(20),
           ),
+          child: profilePicture.isNotEmpty
+              ? Image.network(profilePicture, fit: BoxFit.contain)
+              : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
         ),
-      );
+      ),
+    );
   }
 
   Widget buildName() {
@@ -166,7 +205,6 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ...
           const SizedBox(height: 10),
           ...outfitsList
               .asMap()
@@ -196,12 +234,10 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ...clothings
-                                .map<Widget>((dynamic clothing) {
+                            ...clothings.map<Widget>((dynamic clothing) {
                               String imageUrl = clothing['real_url'] ?? '';
                               return _buildOutfitItem(imageUrl: imageUrl);
-                            })
-                                .toList(),
+                            }).toList(),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -229,8 +265,6 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     );
   }
 
-
-
   Widget _buildOutfitItem({required String imageUrl}) {
     return Flexible(
       child: Padding(
@@ -254,6 +288,4 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       ),
     );
   }
-
 }
-
