@@ -1,9 +1,9 @@
 # MyDressCode_Mobile
-Repository de l'application mobile
+Mobile application repository
 
-## Présentation du projet 
+## Project presentation
 
-Le projet MyDressCode, est une Plateforme de gestion de dressing qui a pour but de simplifier la vie des utilisateurs avec la gestion des vêtements de leur dressing et la création de tenues. La plateforme propose un ensemble de fonctionnalités accès sur la communauté, en permettant par exemple de voir les tenues publiques des autres utilisateurs, les ajouter en favoris, etc ...
+The MyDressCode project is a wardrobe management platform aimed at simplifying the lives of users by managing their clothing and creating outfits. The platform offers a set of community-focused features, such as the ability to view other users' public outfits, add them to favorites, and more.
 
 ## Install git
 
@@ -12,70 +12,68 @@ Open a terminal and run the following command:
 sudo apt-get install git
 ```
 
-## Installation du projet
-Pour ceux qui veulent reprendre le projet, voici une liste de tâches à effectuer pour cloner et lancer le projet
+## Install the projet
+For those who want to work on the project, here is a list of tasks to clone and run the project.
 
-### Installation de flutter
-L'application est codée en flutter, il faut donc dans un premier temps, installer ce dernier.
+### Install flutter
+The application is coded in Flutter, so you need to install it first.
 
-👉🏼 Télécharger le fichier ZIP de flutter ( dernière version à l’heure de la documentation )
+👉🏼 Download the ZIP file for Flutter (latest version at the time of documentation)
 ```bash
 https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.3.9-stable.zip
 ```
 
-👉🏼 Se rendre sur le dossier où vous voulez mettre Flutter dans le terminal à l’aide du cd Puis dé-ziper le fichier dans ce dossier
+👉🏼 Navigate to the directory where you want to place Flutter using the terminal and unzip the file in that directory.
 ```bash
 unzip ~/Downloads/flutter_macos_arm64_3.3.9-stable.zip
 ```
 
-👉🏼 Puis l’ajouter au PATH
+👉🏼 Add Flutter to the PATH
 ```bash
 export PATH="$PATH:pwd/flutter/bin”
 ```
 
-👉🏼 Après ces étapes, tester si Flutter à bien été installé dans le cmd :
+👉🏼 After these steps, test if Flutter has been installed by running the following command:
 ```bash
 flutter doctor
 ```
-Si vous obtenez “zsh: command not found: flutter” il faut continuer
-Sinon tant mieux vous avez Flutter
+If you get "zsh: command not found: flutter," continue to the next steps. Otherwise, congratulations, you have Flutter installed.
 
-👉🏼 Exécuter la commande suivante
+👉🏼 Run the following command:
 ```bash
 vim $HOME/.zshrc
 ```
 
-Cliquer sur i afin de rentrer dans le mode insert et copier coller l’export suivant
+Press "i" to enter insert mode and copy-paste the following export:
 ```bash
 export PATH=$PATH:/~/flutter/bin
 ```
-Afin de quitter le .zshrc cliquer appuyer sur echap ( esc ) et écrire la commande suivante
-et appuyer sur Enter
+To exit the .zshrc file, press "Esc" and enter the following command, then press Enter:
 ```bash
 :wq!
 ```
 
-Normalement flutter s’est installé
+Flutter should now be installed.
 ```bash
 flutter
 ```
 
-### Cloner le projet 
-Pour pouvoir cloner le projet, il faut suivre ces quelques étapes:
+### Clone the project
+To clone the project, follow these steps:
 
-Copier l'url du repos (à copier lorsque l'on clique sur le bouton vert `< > code` en haut du repos
+Copy the repository URL (you can copy it by clicking on the green < > Code button at the top of the repository)
 
-Dans un terminal:
+In a terminal:
 
-  Créer un repertoire pour le projet et s'y déplacer: 
+Create a directory for the project and navigate to it: 
 ```bash
-mkdir nom_du_dossier && cd nom_du_dossier
+mkdir directory_name && cd directory_name
 ```
   
-  Exécuter la commande de clone: 
+Run the clone command:
   
 ```bash
 git clone url
 ```
 
-Et voilà, plus qu'à coder 👍🏻
+That's it! You're ready to code 👍🏻
