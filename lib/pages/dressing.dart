@@ -442,7 +442,7 @@ class _DressingState extends State<Dressing> {
                                   ),
                                   SizedBox(height: 20),
                                   Text(
-                                    'Nom : ${_clothes![index].name}',
+                                    'Nom : ${_clothes![index].name} ${_clothes![index].id}',
                                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 10),

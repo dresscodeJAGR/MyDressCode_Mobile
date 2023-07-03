@@ -351,9 +351,12 @@ class _EditClothState extends State<EditCloth> {
     final double imageHeight = imageWidth;
 
     if (_loading) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            backgroundColor: Color.fromRGBO(79, 125, 88, 1),
+            color: Color.fromRGBO(79, 125, 88, 1),
+          ),
         ),
       );
     }else{
@@ -365,7 +368,7 @@ class _EditClothState extends State<EditCloth> {
             if (_hasImage && _formKey.currentState?.validate() == true && _selectedImage != null)
               IconButton(
                 onPressed: submitForm,
-                icon: Icon(Icons.check),
+                icon: const Icon(Icons.check),
               ),
           ],
         ),
@@ -611,7 +614,53 @@ class _EditClothState extends State<EditCloth> {
 
 
   void submitForm() async {
+    String name = _nameController.text;
 
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      var request = http.MultipartRequest('PUT', Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/100'));
+      request.headers['Content-Type'] = 'application/json; charset=UTF-8';
+      request.headers['Authorization'] = 'Bearer $token';
+
+      print('nom : ' + name);
+      print('couleur : ' + _selectedColorOption!.id.toString());
+      print('marque : ' + _selectedBrand!.id.toString());
+      print('catégorie : ' + _selectedSubcategory!.id.toString());
+      print('taille : ' + _selectedSize!.id.toString());
+
+      request.fields['name'] = name;
+      request.fields['is_dirty'] = '0';
+      request.fields['color_id'] = _selectedColorOption!.id.toString();
+      request.fields['brand_id'] = _selectedBrand!.id.toString();
+      request.fields['category_id'] = _selectedSubcategory!.id.toString();
+      request.fields['size_id'] = _selectedSize!.id.toString();
+
+      /*
+      if (_selectedImage != null) {
+        var file = await http.MultipartFile.fromPath('image', _selectedImage!.path, contentType: MediaType('image', 'jpeg'));
+        request.files.add(file);
+        print(file);
+      }
+*/
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('200 modifier');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Le vêtement "$name" a bien été mis à jour.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+      } else {
+        print( response.statusCode );
+      }
+    } catch (e) {
+      print( e.toString() );
+    }
   }
 
   Future<void> selectImage(ImageSource source) async {
