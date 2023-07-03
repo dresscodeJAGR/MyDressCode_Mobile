@@ -95,6 +95,8 @@ class _UtilisateursState extends State<Utilisateurs> {
           valueColor: AlwaysStoppedAnimation<Color>(Color.fromRGBO(79, 125, 88, 1)),
         ),
       )
+          : users.isEmpty
+          ? Center(child: Text("Pas d'utilisateurs favoris pour le moment", style: TextStyle(fontSize: 18)))
           : ListView.builder(
         itemCount: users.length,
         itemBuilder: (context, index) {
@@ -164,7 +166,6 @@ class _UtilisateursState extends State<Utilisateurs> {
       ),
     );
   }
-
 
   void confirmationSuppression(User user) {
     showDialog(

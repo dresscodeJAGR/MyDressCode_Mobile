@@ -163,7 +163,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   }
 
   Widget buildImageProfile() {
-    String profilePicture = user['real_profile_picture'];
+    String? profilePicture = user['real_profile_picture'];
 
     return Center(
       child: Padding(
@@ -174,7 +174,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: profilePicture.isNotEmpty
+          child: profilePicture != null
               ? Image.network(profilePicture, fit: BoxFit.contain)
               : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
         ),
@@ -281,6 +281,17 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
+                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -289,4 +300,5 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       ),
     );
   }
+
 }

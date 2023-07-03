@@ -42,6 +42,7 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
   }
 
   Future<void> fetchUsers() async {
+    print('fetchUsers');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
@@ -54,13 +55,15 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
       },
     );
     if (response.statusCode == 200) {
-      print('200');
       var jsonData = json.decode(response.body)['users'];
       List<Map<String, String>> users = [];
       for (var userData in jsonData) {
         int id = userData['id'];
         String pseudo = userData['pseudo'];
         String email = userData['email'];
+        if (userData['real_profile_picture'] == null) {
+          userData['real_profile_picture'] = 'assets/images/imgProfile.png';
+        }
         String profilePicture = userData['real_profile_picture'];
         User user = User(id: id, pseudo: pseudo, email: email, profilePicture: profilePicture);
         users.add(user.toMap());
@@ -134,7 +137,6 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
           context,
           MaterialPageRoute(
             builder: (context) => ProfilUtilisateur(
-              //user: user,
               userId: int.parse(user['id']!),
             ),
           ),
@@ -160,7 +162,9 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
                   ),
                   borderRadius: BorderRadius.circular(50.0),
                   image: DecorationImage(
-                    image: NetworkImage(user['image']!),
+                    image: (user['image'] == 'assets/images/imgProfile.png'
+                        ? AssetImage(user['image']!)
+                        : NetworkImage(user['image']!)) as ImageProvider<Object>,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -180,5 +184,6 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
       ),
     );
   }
+
 
 }
