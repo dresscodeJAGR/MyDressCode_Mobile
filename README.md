@@ -67,13 +67,14 @@ Copier l'url du repos (à copier lorsque l'on clique sur le bouton vert `< > cod
 
 Dans un terminal:
 
-  Créer un repertoire pour le projet et s'y déplacer: ```bash
+  Créer un repertoire pour le projet et s'y déplacer: 
+```bash
 mkdir nom_du_dossier && cd nom_du_dossier
 ```
   
   Exécuter la commande de clone: 
   
-  ```bash
+```bash
 git clone url
 ```
 
