@@ -18,6 +18,9 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
   int nbOutfits = 0;
   List<Map<String, dynamic>> outfits = [];
   List<bool> _favoriteStars = [];
+  List<bool> _favoriteOutfits = [];
+  bool _isUserFavorized = false;
+
 
   @override
   void initState() {
@@ -47,8 +50,11 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
           outfits = List<Map<String, dynamic>>.from((user['outfits'] as List).map((outfit) => Map<String, dynamic>.from(outfit)));
           isLoading = false;
           nbOutfits = user['outfits'].length;
+          _favoriteOutfits = List<bool>.from(outfits.map((outfit) => outfit['is_favorized'] ?? false));
+          _isUserFavorized = user['is_favorized'] ?? false;
         });
         print(user);
+        print(outfits);
       } else {
         setState(() {
           isLoading = false;
@@ -100,8 +106,8 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Ajouter/Retirer des favoris"),
-          content: _favoriteStars[index]
-              ? const Text("Êtes-vous sûr de vouloir ajouter cet outfit à vos favoris ?")
+          content: _favoriteOutfits[index]
+              ? const Text("Êtes-vous sûr de vouloir retirer cet outfit de vos favoris ?")
               : const Text("Êtes-vous sûr de vouloir ajouter cet outfit à vos favoris ?"),
           actions: [
             TextButton(
@@ -112,6 +118,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
               onPressed: () {
                 setState(() {
                   toggleFavoriteOutfit(outfits[index]['id'], index); // Toggle favorite outfit
+                  _favoriteOutfits[index] = !_favoriteOutfits[index]; // Mettre à jour l'état du favori
                 });
                 Navigator.of(context).pop(); // Fermer la boîte de dialogue
               },
@@ -131,15 +138,39 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     );
   }
 
+  void toggleFavoriteUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/favorize/user/${widget.userId}');
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'action': _isUserFavorized ? 'remove' : 'add',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('User favorized');
+      setState(() {
+        _isUserFavorized = !_isUserFavorized;
+      });
+    } else {
+      print('Failed to toggle favorite user');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Une erreur est survenue')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(' Profil utilisateur '),
-        elevation: 15,
-        backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
-      ),
+      appBar: buildAppBar(),
       body: isLoading
           ? const Center(
         child: CircularProgressIndicator(),
@@ -161,6 +192,28 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       ),
     );
   }
+
+  PreferredSizeWidget? buildAppBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: AppBar(
+        title: const Text(' Profil utilisateur '),
+        elevation: 15,
+        backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isUserFavorized ? Icons.favorite : Icons.favorite_border,
+              color: _isUserFavorized ? Colors.red : Colors.white,
+            ),
+            onPressed: toggleFavoriteUser,
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
   Widget buildImageProfile() {
     String? profilePicture = user['real_profile_picture'];
@@ -250,8 +303,8 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                     right: 0,
                     child: IconButton(
                       icon: Icon(
-                        _favoriteStars[index] ? Icons.star : Icons.star_border,
-                        color: _favoriteStars[index] ? Colors.yellow : Colors.grey,
+                        _favoriteOutfits[index] ? Icons.star : Icons.star_border,
+                        color: _favoriteOutfits[index] ? Colors.yellow : Colors.grey,
                       ),
                       onPressed: () => _toggleFavoriteStar(index),
                     ),

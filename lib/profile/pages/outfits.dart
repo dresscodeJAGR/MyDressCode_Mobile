@@ -79,7 +79,7 @@ class _OutfitsState extends State<Outfits> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
-        title: const Text("Outfits"),
+        title: const Text("Mes outfits"),
       ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator(

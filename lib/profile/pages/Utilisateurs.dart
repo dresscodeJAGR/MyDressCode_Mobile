@@ -49,8 +49,9 @@ class _UtilisateursState extends State<Utilisateurs> {
         users = jsonResponse.map((item) => User(
           id: item['id'].toString(),
           pseudo: item['pseudo'],
-          realProfilePicture: item['real_profile_picture'],
+          realProfilePicture: item['real_profile_picture'] ?? 'assets/images/imgProfile.png',
         )).toList();
+
       });
     } else {
       print('Failed to load users from API with status code: ${response.statusCode}');
@@ -138,8 +139,11 @@ class _UtilisateursState extends State<Utilisateurs> {
                                 ),
                               );
                             },
+                            errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                              return Image.asset('assets/images/imgProfile.png', fit: BoxFit.cover);
+                            },
                           )
-                              : Container(), // add a placeholder here if you want
+                              : Image.asset('assets/images/imgProfile.png', fit: BoxFit.cover),
                         ),
                         if (users[index].realProfilePicture == null)
                           const Center(child: CircularProgressIndicator()),

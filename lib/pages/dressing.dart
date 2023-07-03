@@ -137,6 +137,9 @@ class Dressing extends StatefulWidget {
 }
 
 class _DressingState extends State<Dressing> {
+  int? categoryId;
+  int? subCategoryId;
+
   List<Category>? categories;
   List<SubCategory> subCategories = [];
 
@@ -278,11 +281,28 @@ class _DressingState extends State<Dressing> {
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
+              // Stocker les valeurs actuelles de categoryId et subCategoryId
+              var currentCategoryId = categoryId;
+              var currentSubCategoryId = subCategoryId;
+
               // Ouvrir la page d'ajout de vêtement
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AddCloth()),
-              );
+              ).then((_) {
+                // Rafraîchir les données
+                setState(() {
+                  chercherCategories();
+
+                  // Utiliser les valeurs stockées pour rafraîchir les vêtements
+                  if (currentCategoryId != null) {
+                    fetchClothes(currentCategoryId);
+                  }
+                  if (currentSubCategoryId != null) {
+                    fetchSubCategoryClothes(currentSubCategoryId);
+                  }
+                });
+              });
             },
           )
         ],
@@ -312,16 +332,18 @@ class _DressingState extends State<Dressing> {
                 width: 120.0,
                 height: 40.0,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    List<Cloth> clothes = await fetchClothes(category.id);
-                    setState(() {
-                      _clothes = clothes;
-                      subCategories = category.subCategories;
-                      selectedCategoryId = category.id.toString();
-                      selectedSubCategoryId = null; // Reset the selected sub-category
-                    });
-                    selectedCategory = category.name.toLowerCase();
-                  },
+                    onPressed: () async {
+                      List<Cloth> clothes = await fetchClothes(category.id);
+                      setState(() {
+                        _clothes = clothes;
+                        subCategories = category.subCategories;
+                        selectedCategoryId = category.id.toString();
+                        selectedSubCategoryId = null; // Reset the selected sub-category
+                        categoryId = category.id;  // Add this line
+                        subCategoryId = null;  // Add this line
+                      });
+                      selectedCategory = category.name.toLowerCase();
+                    },
                   style: ElevatedButton.styleFrom(
                     primary: selectedCategoryId == category.id.toString() // Use toString() if id is int
                         ? Colors.white
@@ -361,13 +383,14 @@ class _DressingState extends State<Dressing> {
                   width: 120.0,
                   height: 40.0,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      List<Cloth> clothes = await fetchSubCategoryClothes(subCategory.id);
-                      setState(() {
-                        _clothes = clothes;
-                        selectedSubCategoryId = subCategory.id.toString();
-                      });
-                    },
+                      onPressed: () async {
+                        List<Cloth> clothes = await fetchSubCategoryClothes(subCategory.id);
+                        setState(() {
+                          _clothes = clothes;
+                          selectedSubCategoryId = subCategory.id.toString();
+                          subCategoryId = subCategory.id; // Add this line
+                        });
+                      },
                     style: ElevatedButton.styleFrom(
                       primary: selectedSubCategoryId == subCategory.id.toString() // Use toString() if id is int
                           ? Colors.white
@@ -420,16 +443,19 @@ class _DressingState extends State<Dressing> {
                           );
                           return AlertDialog(
                             content: SingleChildScrollView(
-                              child: ListBody(
+                              child: Column(
                                 children: <Widget>[
-                                  TextButton(
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Color.fromRGBO(79, 125, 88, 1),
+                                  Container(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Color.fromRGBO(79, 125, 88, 1),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
                                     ),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
                                   ),
                                   Hero(
                                     tag: 'popupImage${_clothes![index].id}',

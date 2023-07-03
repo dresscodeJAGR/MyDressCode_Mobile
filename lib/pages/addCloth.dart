@@ -88,6 +88,9 @@ class _AddClothState extends State<AddCloth> {
   final ImagePicker _imagePicker = ImagePicker();
   XFile? _selectedImage;
 
+  bool _formIsValid = false;
+
+
   @override
   void initState() {
     super.initState();
@@ -242,8 +245,6 @@ class _AddClothState extends State<AddCloth> {
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         title: const Text('Ajouter un vêtement'),
         actions: [
-          if (_hasImage && _formKey.currentState != null && _formKey.currentState!.validate() && _selectedImage != null)
-
             IconButton(
               onPressed: submitForm,
               icon: Icon(Icons.check),
@@ -310,6 +311,7 @@ class _AddClothState extends State<AddCloth> {
                       _selectedSubcategory = null;
                     });
                   },
+
                 ),
                 const SizedBox(height: 16),
                 if (_selectedCategory != null)
@@ -489,6 +491,13 @@ class _AddClothState extends State<AddCloth> {
 
 
   void submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _formIsValid = false;
+      });
+
+      return;
+    }
     // Effectuer la soumission du formulaire
     String name = _nameController.text;
 
@@ -523,22 +532,16 @@ class _AddClothState extends State<AddCloth> {
           builder: (context) {
             return AlertDialog(
               title: Text('Succès'),
-              content: Text('Le vêtement "$name" a bien été ajouté.'),
+              content: Text('Le vêtement a été ajouté avec succès.'),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Ferme la boîte de dialogue
-                    Navigator.pop(context); // Revient en arrière d'une page
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: Text('OK'),
                 ),
               ],
             );
           },
         );
-
-
-
 
         // Reset the form
         _formKey.currentState!.reset();
@@ -551,7 +554,8 @@ class _AddClothState extends State<AddCloth> {
           _selectedBrand = null;
           _selectedSize = null;
         });
-      }   else {
+      }
+      else {
         // Erreur
         print('Échec de l\'ajout du vêtement. Erreur: ${response.reasonPhrase}');
 
