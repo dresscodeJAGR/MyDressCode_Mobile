@@ -195,6 +195,19 @@ class _HomeState extends State<Home> {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
+                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                        color: Color.fromRGBO(79, 125, 88, 1), // Vert
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

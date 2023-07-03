@@ -97,7 +97,6 @@ class _FavorisState extends State<Favoris> {
             content: const Text("Êtes-vous sûr de vouloir retirer cet outfit de vos favoris ?"),
             actions: [
               TextButton(
-                child: const Text("Oui"),
                 style: TextButton.styleFrom(
                   primary: Colors.green, // Text color of "Yes" button
                 ),
@@ -109,15 +108,16 @@ class _FavorisState extends State<Favoris> {
                   });
                   Navigator.of(context).pop(); // Close the dialog box
                 },
+                child: const Text("Oui"),
               ),
               TextButton(
-                child: const Text("Non"),
                 style: TextButton.styleFrom(
                   primary: Colors.red, // Text color of "No" button
                 ),
                 onPressed: () {
                   Navigator.of(context).pop(); // Close the dialog box
                 },
+                child: const Text("Non"),
               ),
             ],
           );
@@ -137,10 +137,12 @@ class _FavorisState extends State<Favoris> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
-        title: const Text("Favoris"),
+        title: const Text("Outfits favoris"),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Color.fromRGBO(79, 125, 88, 1)),)
+          )
           : Column(
         children: [
           Expanded(
@@ -216,7 +218,36 @@ class _FavorisState extends State<Favoris> {
                 ),
                 const SizedBox(height: 16.0),
                 ...outfit['clothings'].map<Widget>((clothing) {
-                  return Image.network(clothing['real_url'], width: imageSize, height: imageSize);
+                  return Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.network(
+                          clothing['real_url'],
+                          width: imageSize * 0.9,  // 90% de la taille originale
+                          height: imageSize * 0.9, // 90% de la taille originale
+                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return SizedBox(
+                              width: imageSize * 0.9,  // 90% de la taille originale
+                              height: imageSize * 0.9, // 90% de la taille originale
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(const Color.fromRGBO(79, 125, 88, 1)),
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
                 }).toList(),
               ],
             ),
