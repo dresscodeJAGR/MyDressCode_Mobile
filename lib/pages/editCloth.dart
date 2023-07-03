@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import 'dressing.dart';
 
@@ -351,9 +351,12 @@ class _EditClothState extends State<EditCloth> {
     final double imageHeight = imageWidth;
 
     if (_loading) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            backgroundColor: Color.fromRGBO(79, 125, 88, 1),
+            color: Color.fromRGBO(79, 125, 88, 1),
+          ),
         ),
       );
     }else{
@@ -365,7 +368,7 @@ class _EditClothState extends State<EditCloth> {
             if (_hasImage && _formKey.currentState?.validate() == true && _selectedImage != null)
               IconButton(
                 onPressed: submitForm,
-                icon: Icon(Icons.check),
+                icon: const Icon(Icons.check),
               ),
           ],
         ),
@@ -609,10 +612,62 @@ class _EditClothState extends State<EditCloth> {
     }
   }
 
-
   void submitForm() async {
+    String name = _nameController.text;
+    int? category = _selectedSubcategory?.id;
+    int? color = _selectedColorOption?.id;
+    int? brand = _selectedBrand?.id;
+    int? size = _selectedSize?.id;
+    String clothId = widget.clothData.id.toString();
 
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/'
+          '$clothId?name=$name'
+          '&category_id=$category'
+          '&color_id=$color'
+          '&brand_id=$brand'
+          '&size_id=$size');
+
+      var request = http.MultipartRequest('PUT', url)
+        ..headers.addAll(<String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        });
+
+      if (_selectedImage != null) {
+        List<int> fileBytes = await File(_selectedImage!.path).readAsBytes();
+        http.MultipartFile multipartFile = http.MultipartFile.fromBytes(
+          'image',
+          fileBytes,
+          filename: 'image.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        );
+        request.files.add(multipartFile);
+      }
+
+      var response = await http.Response.fromStream(await request.send());
+
+      if (response.statusCode == 200) {
+        print('200 modifier');
+        Navigator.pop(context);
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Le vêtement "$name" a bien été mis à jour.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        print(response.statusCode);
+      }
+    } catch (e) {
+      print(e.toString());
+    }
   }
+
 
   Future<void> selectImage(ImageSource source) async {
     try {
