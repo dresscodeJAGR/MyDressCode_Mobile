@@ -5,6 +5,11 @@ Repository de l'application mobile
 
 Le projet MyDressCode, est une Plateforme de gestion de dressing qui a pour but de simplifier la vie des utilisateurs avec la gestion des vêtements de leur dressing et la création de tenues. La plateforme propose un ensemble de fonctionnalités accès sur la communauté, en permettant par exemple de voir les tenues publiques des autres utilisateurs, les ajouter en favoris, etc ...
 
+## Install git
+
+Open a terminal and run the following command: 
+`sudo apt-get install git`
+
 ## Installation du projet
 Pour ceux qui veulent reprendre le projet, voici une liste de tâches à effectuer pour cloner et lancer le projet
 
@@ -40,9 +45,19 @@ Normalement flutter s’est installé
 ### Cloner le projet 
 Pour pouvoir cloner le projet, il faut suivre ces quelques étapes:
 
-Copier l'url du repos (à copier lorsque l'on clique sur le bouton vert `< > code`en haut du repos
+Copier l'url du repos (à copier lorsque l'on clique sur le bouton vert `< > code` en haut du repos
 
+Dans un terminal:
+
+  Créer un repertoire pour le projet et s'y déplacer: `mkdir nom_du_dossier && cd nom_du_dossier`
+  
   Exécuter la commande de clone: 
+  
+  `git clone url`
 
-`git clone url`
+Et voilà, plus qu'à coder 👍🏻
 
+## Téléchargement de l'application
+Pour ceux qui veulent simplement télécharger l'application, voici le lien pour télécharger l'APK de cette dernière:
+
+``
