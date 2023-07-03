@@ -109,12 +109,6 @@ class _OutfitCreateState extends State<OutfitCreate> {
     final token = prefs.getString('token') ?? '';
 
     final url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits');
-    //print toutes les valeurs pour verif
-
-    print(outfitName);
-    print(isPublic);
-    print(idClothes);
-
     final response = await http.post(
       url,
       headers: <String, String>{
@@ -123,8 +117,8 @@ class _OutfitCreateState extends State<OutfitCreate> {
       },
       body: jsonEncode(<String, dynamic>{
         'name': outfitName,
-        'is_public': 1,  // Conversion ici
-        'clothing_ids': [1,2,3],
+        'is_public': 1,
+        'clothing_ids': idClothes,
       }),
     );
 
@@ -141,6 +135,7 @@ class _OutfitCreateState extends State<OutfitCreate> {
       throw Exception('Failed to create outfit. Status code: ${response.statusCode} / $outfitName / $isPublic / $idClothes');
     }
   }
+
 
 
   @override

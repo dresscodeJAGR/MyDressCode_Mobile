@@ -170,8 +170,8 @@ class _OutfitsState extends State<Outfits> {
             ),
           );
         },
-        child: const Icon(Icons.add),
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -181,11 +181,10 @@ class _OutfitsState extends State<Outfits> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Supprimer l'outfit " + id.toString()),
-          content: Text("Êtes-vous sûr de vouloir supprimer cet outfit ?"),
+          title: Text("Supprimer l'outfit $id"),
+          content: const Text("Êtes-vous sûr de vouloir supprimer cet outfit ?"),
           actions: [
             TextButton(
-              child: const Text("Oui"),
               style: TextButton.styleFrom(
                 primary: Colors.green,
               ),
@@ -193,15 +192,16 @@ class _OutfitsState extends State<Outfits> {
                 deleteOutfit(outfits[index]['id']);  // Delete the outfit
                 Navigator.of(context).pop();  // Close the dialog box
               },
+              child: const Text("Oui"),
             ),
             TextButton(
-              child: const Text("Non"),
               style: TextButton.styleFrom(
                 primary: Colors.red,
               ),
               onPressed: () {
                 Navigator.of(context).pop();  // Close the dialog box
               },
+              child: const Text("Non"),
             ),
           ],
         );
@@ -292,7 +292,5 @@ class _OutfitsState extends State<Outfits> {
       ],
     );
   }
-
-
 
 }
