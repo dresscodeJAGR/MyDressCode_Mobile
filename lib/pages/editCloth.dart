@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import 'dressing.dart';
 
@@ -612,56 +612,62 @@ class _EditClothState extends State<EditCloth> {
     }
   }
 
-
   void submitForm() async {
     String name = _nameController.text;
+    int? category = _selectedSubcategory?.id;
+    int? color = _selectedColorOption?.id;
+    int? brand = _selectedBrand?.id;
+    int? size = _selectedSize?.id;
+    String clothId = widget.clothData.id.toString();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
     try {
-      var request = http.MultipartRequest('PUT', Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/100'));
-      request.headers['Content-Type'] = 'application/json; charset=UTF-8';
-      request.headers['Authorization'] = 'Bearer $token';
+      var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/'
+          '$clothId?name=$name'
+          '&category_id=$category'
+          '&color_id=$color'
+          '&brand_id=$brand'
+          '&size_id=$size');
 
-      print('nom : ' + name);
-      print('couleur : ' + _selectedColorOption!.id.toString());
-      print('marque : ' + _selectedBrand!.id.toString());
-      print('catégorie : ' + _selectedSubcategory!.id.toString());
-      print('taille : ' + _selectedSize!.id.toString());
+      var request = http.MultipartRequest('PUT', url)
+        ..headers.addAll(<String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        });
 
-      request.fields['name'] = name;
-      request.fields['is_dirty'] = '0';
-      request.fields['color_id'] = _selectedColorOption!.id.toString();
-      request.fields['brand_id'] = _selectedBrand!.id.toString();
-      request.fields['category_id'] = _selectedSubcategory!.id.toString();
-      request.fields['size_id'] = _selectedSize!.id.toString();
-
-      /*
       if (_selectedImage != null) {
-        var file = await http.MultipartFile.fromPath('image', _selectedImage!.path, contentType: MediaType('image', 'jpeg'));
-        request.files.add(file);
-        print(file);
+        List<int> fileBytes = await File(_selectedImage!.path).readAsBytes();
+        http.MultipartFile multipartFile = http.MultipartFile.fromBytes(
+          'image',
+          fileBytes,
+          filename: 'image.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        );
+        request.files.add(multipartFile);
       }
-*/
-      var response = await request.send();
+
+      var response = await http.Response.fromStream(await request.send());
 
       if (response.statusCode == 200) {
         print('200 modifier');
+        Navigator.pop(context);
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Le vêtement "$name" a bien été mis à jour.'),
             backgroundColor: Colors.green,
           ),
         );
-
       } else {
-        print( response.statusCode );
+        print(response.statusCode);
       }
     } catch (e) {
-      print( e.toString() );
+      print(e.toString());
     }
   }
+
 
   Future<void> selectImage(ImageSource source) async {
     try {
