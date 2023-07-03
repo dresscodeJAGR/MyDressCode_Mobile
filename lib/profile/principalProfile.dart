@@ -7,6 +7,7 @@ import 'package:mdc/profile/pages/settings.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class PrincipalProfile extends StatefulWidget {
   const PrincipalProfile({super.key});
@@ -21,6 +22,10 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
   String userImageUrl = "";
   bool loadError = false;
   int key = 0;
+  String newPseudo = "";
+
+  bool isEditing = false;
+  final TextEditingController nameController = TextEditingController();
 
   @override
   void initState() {
@@ -47,14 +52,13 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
       setState(() {
         userName = user['pseudo'];
         userImageUrl = user['real_profile_picture'];
+        nameController.text = userName;
       });
-
     } else {
       // Handle error case
       print('Failed to load user');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -80,26 +84,28 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
           )
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          const SizedBox(
-            height: 30,
-          ),
-          Container(
-            child: buildImageProfile(),
-          ),
-          Container(
-            child: buildName(),
-          ),
-          Container(
-            margin: const EdgeInsets.fromLTRB(0, 50, 0, 0),
-            child: buildButtons(),
-          ),
-          Container(
-            margin: const EdgeInsets.fromLTRB(0, 50, 0, 0),
-            child: buildButtonsRouting(),
-          ),
-        ],
+      body: SingleChildScrollView(  // wrap Column with SingleChildScrollView
+        child: Column(
+          children: <Widget>[
+            const SizedBox(
+              height: 30,
+            ),
+            Container(
+              child: buildImageProfile(),
+            ),
+            Container(
+              child: buildName(),
+            ),
+            Container(
+              margin: const EdgeInsets.fromLTRB(0, 50, 0, 0),
+              child: buildButtons(),
+            ),
+            Container(
+              margin: const EdgeInsets.fromLTRB(0, 50, 0, 0),
+              child: buildButtonsRouting(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -138,7 +144,8 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
                   );
                 },
                 errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                  return Icon(Icons.error); // or any other widget to indicate an error
+                  fetchUser();
+                  return Container(); // Return an empty container
                 },
               )
                   : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
@@ -149,19 +156,66 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
     );
   }
 
-
   Widget buildName() {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
-      child: Text(
-        userName,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.black,
-          letterSpacing: 1,
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          isEditing
+              ? Flexible(
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      cursorColor: const Color.fromRGBO(79, 125, 88, 1),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                      controller: nameController,
+                      onSubmitted: (_) => editPseudo(),
+                      decoration: InputDecoration(
+                        labelText: 'Changer de pseudo',
+                        labelStyle: TextStyle(color: Color.fromRGBO(79, 125, 88, 1)),
+                        border: OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color.fromRGBO(79, 125, 88, 1), width: 2.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color.fromRGBO(79, 125, 88, 1), width: 2.0),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.check),
+                    onPressed: editPseudo,
+                  ),
+                ],
+              ),
+            ),
+          )
+              : Text(
+            userName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black,
+              letterSpacing: 1,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (!isEditing)
+            IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: startEditing,
+            ),
+        ],
       ),
     );
   }
@@ -179,20 +233,13 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   primary: Colors.white, // Fond blanc
-                  onPrimary: Colors.green, // Texte en vert
+                  onPrimary: const Color.fromRGBO(79, 125, 88, 1), // Texte en vert
                   minimumSize: const Size(0, 40), // Ajuster la hauteur des boutons
                   side: const BorderSide(
-                    color: Colors.green, // Bordure verte
+                    color: const Color.fromRGBO(79, 125, 88, 1),// Bordure verte
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PrincipalProfile(),
-                    ),
-                  );
-                },
+                onPressed: () => pickImage(),
                 child: const Text(
                   'Modifier',
                   style: TextStyle(
@@ -209,10 +256,10 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   primary: Colors.white, // Fond blanc
-                  onPrimary: Colors.green, // Texte en vert
+                  onPrimary: const Color.fromRGBO(79, 125, 88, 1),// Texte en vert
                   minimumSize: const Size(0, 40), // Ajuster la hauteur des boutons
                   side: const BorderSide(
-                    color: Colors.green, // Bordure verte
+                    color: const Color.fromRGBO(79, 125, 88, 1), // Bordure verte
                   ),
                 ),
                 onPressed: () async {
@@ -325,4 +372,80 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
     );
   }
 
+  Future<void> pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      await uploadImage(pickedFile.path);
+    }
+  }
+
+  Future<void> uploadImage(String imagePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/user');
+
+    var request = http.MultipartRequest('PUT', url)
+      ..headers.addAll(<String, String>{
+        'Content-Type': 'multipart/form-data',
+        'Authorization': 'Bearer $token',
+      })
+      ..files.add(
+        await http.MultipartFile.fromPath('image', imagePath),
+      );
+
+    var response = await request.send();
+    if (response.statusCode == 201) {
+      print('Uploaded!');
+      fetchUser();
+    } else {
+      print('Failed to upload image' + response.statusCode.toString());
+    }
+  }
+
+  void startEditing() {
+    setState(() {
+      isEditing = true;
+    });
+  }
+
+
+  Future<void> editPseudo() async {
+    // Obtenir le SharedPreferences pour accéder au token
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+      String newPseudo = nameController.text;
+
+      if (newPseudo.isNotEmpty) {
+      var url = Uri.parse('https://mdc.silvy-leligois.fr/api/user');
+
+      var response = await http.put(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(<String, String>{
+          'pseudo': newPseudo,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pseudonyme modifié'),
+            backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+          ),
+        );
+        setState(() {
+          userName = newPseudo;
+          isEditing = false;
+        });
+      } else {
+        print('Failed to update pseudonym. Status code: ' + response.statusCode.toString());
+      }
+    }
+  }
 }
