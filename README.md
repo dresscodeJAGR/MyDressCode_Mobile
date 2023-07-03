@@ -24,7 +24,7 @@ https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutt
 ```
 
 👉🏼 Se rendre sur le dossier où vous voulez mettre Flutter dans le terminal à l’aide du cd Puis dé-ziper le fichier dans ce dossier
-💻 ```bash
+💻 ```
 unzip ~/Downloads/flutter_macos_arm64_3.3.9-stable.zip
 ```
 
