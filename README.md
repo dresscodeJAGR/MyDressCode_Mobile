@@ -1,6 +1,12 @@
 # MyDressCode_Mobile
 Repository de l'application mobile
 
+## Présentation du projet 
+
+Le projet MyDressCode, est une Plateforme de gestion de dressing qui a pour but de simplifier la vie des utilisateurs avec la gestion des vêtements de leur dressing et la création de tenues. La plateforme propose un ensemble de fonctionnalités accès sur la communauté, en permettant par exemple de voir les tenues publiques des autres utilisateurs, les ajouter en favoris, etc ...
+
+### Installation du projet
+
 ## Installation de flutter
 
 👉🏼 Télécharger le fichier ZIP de flutter ( dernière version à l’heure de la documentation )
