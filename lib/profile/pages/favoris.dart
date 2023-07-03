@@ -97,7 +97,6 @@ class _FavorisState extends State<Favoris> {
             content: const Text("Êtes-vous sûr de vouloir retirer cet outfit de vos favoris ?"),
             actions: [
               TextButton(
-                child: const Text("Oui"),
                 style: TextButton.styleFrom(
                   primary: Colors.green, // Text color of "Yes" button
                 ),
@@ -109,15 +108,16 @@ class _FavorisState extends State<Favoris> {
                   });
                   Navigator.of(context).pop(); // Close the dialog box
                 },
+                child: const Text("Oui"),
               ),
               TextButton(
-                child: const Text("Non"),
                 style: TextButton.styleFrom(
                   primary: Colors.red, // Text color of "No" button
                 ),
                 onPressed: () {
                   Navigator.of(context).pop(); // Close the dialog box
                 },
+                child: const Text("Non"),
               ),
             ],
           );
