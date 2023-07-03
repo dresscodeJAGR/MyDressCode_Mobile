@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mdc/profile/pages/favoris.dart';
 import 'package:mdc/profile/pages/outfits.dart';
 import 'package:mdc/profile/pages/utilisateurs.dart';
 
@@ -39,7 +40,7 @@ class ChoiceFav extends StatelessWidget {
                 // Navigate to Outfit Favourite Page
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Outfits()),
+                  MaterialPageRoute(builder: (context) => const Favoris()),
                 );
               },
               icon: const Icon(Icons.star, color: Colors.yellow),
