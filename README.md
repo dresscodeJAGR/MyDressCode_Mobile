@@ -5,9 +5,11 @@ Repository de l'application mobile
 
 Le projet MyDressCode, est une Plateforme de gestion de dressing qui a pour but de simplifier la vie des utilisateurs avec la gestion des vêtements de leur dressing et la création de tenues. La plateforme propose un ensemble de fonctionnalités accès sur la communauté, en permettant par exemple de voir les tenues publiques des autres utilisateurs, les ajouter en favoris, etc ...
 
-### Installation du projet
+## Installation du projet
+Pour ceux qui veulent reprendre le projet, voici une liste de tâches à effectuer pour cloner et lancer le projet
 
-## Installation de flutter
+### Installation de flutter
+L'application est codée en flutter, il faut donc dans un premier temps, installer ce dernier.
 
 👉🏼 Télécharger le fichier ZIP de flutter ( dernière version à l’heure de la documentation )
 https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.3.9-stable.zip
@@ -34,3 +36,6 @@ et appuyer sur Enter
 
 Normalement flutter s’est installé
 💻 flutter
+
+### Cloner le projet 
+`git clone`
