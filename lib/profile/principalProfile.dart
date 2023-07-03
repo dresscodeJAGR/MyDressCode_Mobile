@@ -19,6 +19,8 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
   final double profileHeight = 144;
   String userName = "";
   String userImageUrl = "";
+  bool loadError = false;
+  int key = 0;
 
   @override
   void initState() {
@@ -106,35 +108,47 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 30, 0, 10),
-        child: SizedBox(
-          height: 200, // Hauteur maximale
-          width: 200, // Largeur maximale
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10), // Bords arrondis avec un rayon de 20
-            child: userImageUrl.isNotEmpty
-                ? Image.network(
-              userImageUrl,
-              fit: BoxFit.contain,
-              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                }
-                return Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                        : null,
-                    color: Color.fromRGBO(79, 125, 88, 1), // Vert
-                  ),
-                );
-              },
-            )
-                : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              key = key + 1;
+            });
+          },
+          child: SizedBox(
+            key: Key(key.toString()),
+            height: 200,
+            width: 200,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: userImageUrl.isNotEmpty
+                  ? Image.network(
+                userImageUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  }
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: const Color.fromRGBO(79, 125, 88, 1),
+                    ),
+                  );
+                },
+                errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                  return Icon(Icons.error); // or any other widget to indicate an error
+                },
+              )
+                  : Image.asset('assets/images/imgProfile.png', fit: BoxFit.contain),
+            ),
           ),
         ),
       ),
     );
   }
+
 
   Widget buildName() {
     return SizedBox(
@@ -221,6 +235,7 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
       ),
     );
   }
+
   Widget buildButtonsRouting() {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8,
@@ -246,9 +261,9 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
                 ),
               ),
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 SizedBox(
                   width: 8,
                 ),
@@ -285,9 +300,9 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
                 ),
               ),
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 SizedBox(
                   width: 8,
                 ),

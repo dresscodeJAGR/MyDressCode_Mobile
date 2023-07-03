@@ -136,8 +136,9 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        title: Text(' Profil utilisateur '),
         elevation: 15,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
       ),
       body: isLoading
           ? Center(
