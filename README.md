@@ -40,9 +40,9 @@ Normalement flutter s’est installé
 ### Cloner le projet 
 Pour pouvoir cloner le projet, il faut suivre ces quelques étapes:
 
-<li>Copier l'url du repos (à copier lorsque l'on clique sur le bouton vert `< > code`en haut du repos</li>
+Copier l'url du repos (à copier lorsque l'on clique sur le bouton vert `< > code`en haut du repos
 
   Exécuter la commande de clone: 
 
-<li>`git clone url`</li>
+`git clone url`
 
