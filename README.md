@@ -56,8 +56,3 @@ Dans un terminal:
   `git clone url`
 
 Et voilà, plus qu'à coder 👍🏻
-
-## Téléchargement de l'application
-Pour ceux qui veulent simplement télécharger l'application, voici le lien pour télécharger l'APK de cette dernière:
-
-``
