@@ -61,7 +61,7 @@ flutter
 ### Clone the project
 To clone the project, follow these steps:
 
-Copy the repository URL (you can copy it by clicking on the green < > Code button at the top of the repository)
+Copy the repository URL (you can copy it by clicking on the green `< > Code` button at the top of the repository)
 
 In a terminal:
 
@@ -77,3 +77,8 @@ git clone url
 ```
 
 That's it! You're ready to code 👍🏻
+
+### Generate project APK
+
+With android studio, click on the `build` tab, then on `Flutter`, and finally on `Build APK`
+
