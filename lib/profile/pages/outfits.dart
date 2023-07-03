@@ -181,7 +181,7 @@ class _OutfitsState extends State<Outfits> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Supprimer l'outfit $id"),
+          title: Text("Supprimer l'outfit $outfitName"),
           content: const Text("Êtes-vous sûr de vouloir supprimer cet outfit ?"),
           actions: [
             TextButton(

@@ -142,7 +142,9 @@ class _FavorisState extends State<Favoris> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator(
         valueColor: AlwaysStoppedAnimation<Color>(Color.fromRGBO(79, 125, 88, 1)),)
-          )
+      )
+          : outfits.isEmpty
+          ? const Center(child: Text('Pas d\'outfits favoris pour le moment', style: TextStyle(fontSize: 18)))
           : Column(
         children: [
           Expanded(
