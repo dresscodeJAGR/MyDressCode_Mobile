@@ -9,7 +9,8 @@ Le projet MyDressCode, est une Plateforme de gestion de dressing qui a pour but 
 
 Open a terminal and run the following command: 
 ```bash 
-sudo apt-get install git```
+sudo apt-get install git
+```
 
 ## Installation du projet
 Pour ceux qui veulent reprendre le projet, voici une liste de tâches à effectuer pour cloner et lancer le projet
