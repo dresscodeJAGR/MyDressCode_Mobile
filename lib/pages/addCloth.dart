@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mdc/pages/dressing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
@@ -66,7 +67,7 @@ class AddCloth extends StatefulWidget {
 }
 
 class _AddClothState extends State<AddCloth> {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController _nameController = TextEditingController();
 
   bool _hasImage = false;
@@ -241,7 +242,8 @@ class _AddClothState extends State<AddCloth> {
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         title: const Text('Ajouter un vêtement'),
         actions: [
-          if (_hasImage && _formKey.currentState?.validate() == true && _selectedImage != null)
+          if (_hasImage && _formKey.currentState != null && _formKey.currentState!.validate() && _selectedImage != null)
+
             IconButton(
               onPressed: submitForm,
               icon: Icon(Icons.check),
@@ -524,13 +526,19 @@ class _AddClothState extends State<AddCloth> {
               content: Text('Le vêtement "$name" a bien été ajouté.'),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context); // Ferme la boîte de dialogue
+                    Navigator.pop(context); // Revient en arrière d'une page
+                  },
                   child: Text('OK'),
                 ),
               ],
             );
           },
         );
+
+
+
 
         // Reset the form
         _formKey.currentState!.reset();

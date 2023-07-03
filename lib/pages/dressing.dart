@@ -4,9 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:mdc/pages/editCloth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
 import 'addCloth.dart';
 
 class ClothData {
@@ -148,13 +145,9 @@ class _DressingState extends State<Dressing> {
   String? selectedCategoryId;
   String? selectedSubCategoryId;
 
-  bool isLoading = false;
+  bool isLoading = true;
 
   List<Cloth>? _clothes;
-
-  File? _image;
-
-  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -177,21 +170,19 @@ class _DressingState extends State<Dressing> {
     );
     print(response.statusCode);
     if (response.statusCode == 200) {
-      setState(() {
-        isLoading = true;
-      });
       print('200Dressing');
       var jsonResponse = jsonDecode(response.body);
       setState(() {
         categories = (jsonResponse as List)
             .map((item) => Category.fromJson(item))
             .toList();
-      });
-      setState(() {
         isLoading = false;
       });
     }  else {
       print('Failed to load categories');
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -296,16 +287,20 @@ class _DressingState extends State<Dressing> {
           )
         ],
       ),
-      body: Column(
+      body: isLoading
+      ? Center(
+        child: CircularProgressIndicator(),
+      )
+      : Column(
         children: <Widget>[
           const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Catégories',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+               'Catégories',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
             ),
           ),
           Wrap(
@@ -539,5 +534,4 @@ class _DressingState extends State<Dressing> {
       ),
     );
   }
-
 }
