@@ -211,8 +211,8 @@ class _OutfitsState extends State<Outfits> {
     );
   }
 
-  void showOutfitDetails(int index) {
-    List clothes = outfits[index]['clothings'];
+  void showOutfitDetails(var outfit) {
+    List clothes = outfit['clothings'];
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -227,7 +227,7 @@ class _OutfitsState extends State<Outfits> {
                 ),
                 children: [
                   TextSpan(
-                      text: outfits[index]['name'],
+                      text: outfit['name'],
                       style: TextStyle(
                         color: const Color.fromRGBO(79, 125, 88, 1),
                         fontSize: 18,
@@ -250,7 +250,7 @@ class _OutfitsState extends State<Outfits> {
                   ),
                   children: [
                     TextSpan(
-                      text: outfits[index]['name'],
+                      text: outfit['name'],
                       style: TextStyle(
                         color: const Color.fromRGBO(79, 125, 88, 1),
                       ),
@@ -420,7 +420,7 @@ class _OutfitsState extends State<Outfits> {
           left: 8,
           child: IconButton(
             icon: const Icon(Icons.info_outline),
-            onPressed: () => showOutfitDetails(outfit['id'])
+            onPressed: () => showOutfitDetails(outfit)
           )
         )
       ],
