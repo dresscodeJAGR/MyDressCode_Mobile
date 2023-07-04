@@ -82,13 +82,12 @@ class SubCategory {
     return SubCategory(
       id: json['id'],
       name: json['name'],
-      image: json['image'] ?? '',
+      image: json['image'],
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
       parentCategoryId: json['parent_category_id'],
     );
   }
-
 }
 
 class Cloth {
@@ -304,12 +303,28 @@ class _DressingState extends State<Dressing> {
     }
   }
 
+  void reloadData() async {
+    await fetchInitialData();
+    if (selectedCategoryId != null) {
+      await fetchClothes(int.parse(selectedCategoryId!));
+    }
+    if (selectedSubCategoryId != null) {
+      await fetchSubCategoryClothes(int.parse(selectedSubCategoryId!));
+    }
+  }
+
+  void removeClothFromList(int clothId) {
+    setState(() {
+      _clothes?.removeWhere((cloth) => cloth.id == clothId);
+    });
+  }
+
   deleteCloth(int clothId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
     print(clothId);
-    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/outfits/$clothId');
+    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/$clothId');
     var response = await http.delete(
       url,
       headers: <String, String>{
@@ -320,10 +335,16 @@ class _DressingState extends State<Dressing> {
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cloth deleted successfully.')),
+        const SnackBar(
+          content: Text('Vêtement supprimé.'),
+          backgroundColor: Color.fromRGBO(79, 125, 88, 1),
+        ),
       );
+
+      // Supprime le vêtement de la liste affichée
+      removeClothFromList(clothId);
     } else {
-      print('Failed to delete cloth' + response.statusCode.toString());
+      print('Failed to delete cloth: ' + response.statusCode.toString());
     }
   }
 
@@ -513,7 +534,7 @@ class _DressingState extends State<Dressing> {
                                   ),
                                   SizedBox(height: 20),
                                   Text(
-                                    'Nom : ${_clothes![index].name}',
+                                    'Nom : ${_clothes![index].name} ${_clothes![index].id}',
                                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 10),

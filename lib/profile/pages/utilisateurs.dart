@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mdc/pages/profilUtilisateur.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../home/home.dart';
@@ -23,6 +24,7 @@ class Utilisateurs extends StatefulWidget {
 class _UtilisateursState extends State<Utilisateurs> {
   List<User> users = [];
   bool isLoading = true;
+  int userId = 0;
 
   @override
   void initState() {
@@ -66,7 +68,7 @@ class _UtilisateursState extends State<Utilisateurs> {
     final token = prefs.getString('token') ?? '';
     var url = Uri.parse('https://mdc.silvy-leligois.fr/api/community/favorize/user/${user.id}');
 
-    var response = await http.post(  // CHANGE THIS LINE
+    var response = await http.post(
       url,
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
@@ -103,9 +105,12 @@ class _UtilisateursState extends State<Utilisateurs> {
         itemBuilder: (context, index) {
           return GestureDetector(
             onTap: () {
+              int userId = int.parse(users[index].id);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Home()), // Assurez-vous d'importer votre HomePage
+                MaterialPageRoute(
+                  builder: (context) => ProfilUtilisateur(userId: userId),
+                ),
               );
             },
             child: Card(

@@ -24,6 +24,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
 
   @override
   void initState() {
+    print('initState');
     super.initState();
     getUserDatas().then((_) {
       setState(() {
