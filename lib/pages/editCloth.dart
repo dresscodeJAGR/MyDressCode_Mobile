@@ -112,6 +112,7 @@ class _EditClothState extends State<EditCloth> {
   TextEditingController _nameController = TextEditingController();
 
   bool _hasImage = false;
+  bool isImageChanged = false;
   bool _loading = true;
 
   List<Category> _categories = [];
@@ -637,7 +638,7 @@ class _EditClothState extends State<EditCloth> {
           'Authorization': 'Bearer $token',
         });
 
-      if (_selectedImage != null) {
+      if (isImageChanged) {
         List<int> fileBytes = await File(_selectedImage!.path).readAsBytes();
         http.MultipartFile multipartFile = http.MultipartFile.fromBytes(
           'image',
@@ -647,6 +648,7 @@ class _EditClothState extends State<EditCloth> {
         );
         request.files.add(multipartFile);
       }
+
 
       var response = await http.Response.fromStream(await request.send());
 
@@ -675,6 +677,7 @@ class _EditClothState extends State<EditCloth> {
       setState(() {
         _selectedImage = pickedFile;
         _hasImage = true;
+        isImageChanged = true;
       });
     } catch (e) {
       print('Image selection error: $e');

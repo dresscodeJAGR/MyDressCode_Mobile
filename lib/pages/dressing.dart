@@ -42,9 +42,12 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
-    var list = json['category'] as List;
-    List<SubCategory> subCategoryList =
-    list.map((i) => SubCategory.fromJson(i)).toList();
+    var subCategoryList = <SubCategory>[];
+
+    if (json.containsKey('category')) {
+      var list = json['category'] as List<dynamic>;
+      subCategoryList = list.map((item) => SubCategory.fromJson(item)).toList();
+    }
 
     return Category(
       id: json['id'],
@@ -55,6 +58,7 @@ class Category {
       subCategories: subCategoryList,
     );
   }
+
 }
 
 class SubCategory {
@@ -78,12 +82,13 @@ class SubCategory {
     return SubCategory(
       id: json['id'],
       name: json['name'],
-      image: json['image'],
+      image: json['image'] ?? '',
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
       parentCategoryId: json['parent_category_id'],
     );
   }
+
 }
 
 class Cloth {
@@ -104,7 +109,24 @@ class Cloth {
   final String colorName;
   final String sizeName;
 
-  Cloth({required this.id, required this.name, required this.image, required this.isDirty, required this.userId, required this.colorId, required this.brandId, required this.categoryId, required this.createdAt, required this.updatedAt, required this.sizeId, required this.realUrl, required this.categoryName, required this.brandName, required this.colorName, required this.sizeName});
+  Cloth({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.isDirty,
+    required this.userId,
+    required this.colorId,
+    required this.brandId,
+    required this.categoryId,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.sizeId,
+    required this.realUrl,
+    required this.categoryName,
+    required this.brandName,
+    required this.colorName,
+    required this.sizeName,
+  });
 
   factory Cloth.fromJson(Map<String, dynamic> json) {
     return Cloth(
@@ -127,7 +149,6 @@ class Cloth {
     );
   }
 }
-
 
 class Dressing extends StatefulWidget {
   const Dressing({Key? key}) : super(key: key);
@@ -155,94 +176,130 @@ class _DressingState extends State<Dressing> {
   @override
   void initState() {
     super.initState();
-    chercherCategories();
+    fetchInitialData();
     print('init');
   }
 
-  Future<void> chercherCategories() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/categories');
-    var response = await http.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    print(response.statusCode);
-    if (response.statusCode == 200) {
-      print('200Dressing');
-      var jsonResponse = jsonDecode(response.body);
-      setState(() {
-        categories = (jsonResponse as List)
-            .map((item) => Category.fromJson(item))
-            .toList();
-        isLoading = false;
-      });
-    }  else {
-      print('Failed to load categories');
+  Future<void> fetchInitialData() async {
+    try {
+      await fetchCategories();
+      print('try after fetchCategories');
+      if (categories != null && categories!.isNotEmpty) {
+        await fetchClothes(categories![0].id);
+        setState(() {
+          selectedCategoryId = categories![0].id.toString();
+          categoryId = categories![0].id;
+          subCategories = categories![0].subCategories;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          //initialise categorie avec des données de test
+          categories = [];
+          isLoading = false;
+        });
+      }
+      print(categories);
+    } catch (error) {
+      print('Error fetching initial data: $error');
       setState(() {
         isLoading = false;
       });
     }
   }
 
-  Future<List<Cloth>> fetchClothes(int categoryId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+  Future<void> fetchCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
 
-    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/category/$categoryId');
-    var response = await http.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      print('200Clothes');
-      var data = jsonDecode(response.body);
-      if (data['clothes'] != null) {
-        var clothesList = data['clothes'] as List;
-        _clothes = clothesList.map((i) => Cloth.fromJson(i)).cast<Cloth>().toList();
+      var url = Uri.parse('https://mdc.silvy-leligois.fr/api/categories');
+      var response = await http.get(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('200 categories ');
+        var jsonResponse = jsonDecode(response.body) as List<dynamic>?;
+        if (jsonResponse != null) {
+          setState(() {
+            categories = jsonResponse.map((item) => Category.fromJson(item)).toList();
+          });
+        } else {
+          print('Response body is null');
+        }
+      } else {
+        print('Failed to load categories. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
       }
+    } catch (error, stackTrace) {
+      print('Error fetching categories: $error');
+      print('Stack trace: $stackTrace');
+    }
+  }
 
-      // Introduce an artificial delay
-      await Future.delayed(const Duration(seconds: 2));
+  Future<List<Cloth>> fetchClothes(int categoryId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
 
-      return _clothes!;
-    } else {
+      var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/category/$categoryId');
+      var response = await http.get(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        if (data['clothes'] != null) {
+          var clothesList = data['clothes'] as List;
+          _clothes = clothesList.map((i) => Cloth.fromJson(i)).cast<Cloth>().toList();
+        }
+
+        return _clothes!;
+      } else {
+        throw Exception('Failed to load clothes');
+      }
+    } catch (error) {
+      print('Error fetching clothes: $error');
       throw Exception('Failed to load clothes');
     }
   }
 
   Future<List<Cloth>> fetchSubCategoryClothes(int subCategoryId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
 
-    var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/sub-category/$subCategoryId');
-    var response = await http.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      print('200SubCategoryClothes');
-      var data = jsonDecode(response.body);
-      if (data['clothes'] != null) {
-        var clothesList = data['clothes'] as List;
-        _clothes = clothesList.map((i) => Cloth.fromJson(i)).cast<Cloth>().toList();
+      var url = Uri.parse('https://mdc.silvy-leligois.fr/api/clothes/sub-category/$subCategoryId');
+      var response = await http.get(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        if (data['clothes'] != null) {
+          var clothesList = data['clothes'] as List;
+          _clothes = clothesList.map((i) => Cloth.fromJson(i)).cast<Cloth>().toList();
+        }
+
+        return _clothes!;
+      } else {
+        throw Exception('Failed to load sub-category clothes');
       }
-
-      // Introduce an artificial delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      return _clothes!;
-    } else {
+    } catch (error) {
+      print('Error fetching sub-category clothes: $error');
       throw Exception('Failed to load sub-category clothes');
     }
   }
@@ -270,7 +327,6 @@ class _DressingState extends State<Dressing> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -279,59 +335,49 @@ class _DressingState extends State<Dressing> {
         title: const Text('Dressing'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () {
-              // Stocker les valeurs actuelles de categoryId et subCategoryId
-              var currentCategoryId = categoryId;
-              var currentSubCategoryId = subCategoryId;
-
-              // Ouvrir la page d'ajout de vêtement
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AddCloth()),
-              ).then((_) {
-                // Rafraîchir les données
-                setState(() {
-                  chercherCategories();
-
-                  // Utiliser les valeurs stockées pour rafraîchir les vêtements
-                  if (currentCategoryId != null) {
-                    fetchClothes(currentCategoryId);
-                  }
-                  if (currentSubCategoryId != null) {
-                    fetchSubCategoryClothes(currentSubCategoryId);
-                  }
-                });
+              ).then((_) async {
+                await fetchInitialData();
+                if (selectedCategoryId != null) {
+                  await fetchClothes(int.parse(selectedCategoryId!));
+                }
+                if (selectedSubCategoryId != null) {
+                  await fetchSubCategoryClothes(int.parse(selectedSubCategoryId!));
+                }
               });
             },
           )
         ],
       ),
       body: isLoading
-      ? Center(
+          ? Center(
         child: CircularProgressIndicator(),
       )
-      : Column(
+          : Column(
         children: <Widget>[
           const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-               'Catégories',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'Catégories',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Wrap(
             alignment: WrapAlignment.start,
-            spacing: 8.0, // space between rows
-            runSpacing: 4.0, // space between lines
-            children: categories!.map((category) {
-              return SizedBox(
-                width: 120.0,
-                height: 40.0,
-                child: ElevatedButton(
+            spacing: 8.0,
+            runSpacing: 4.0,
+              children: categories?.map((category) {
+                return SizedBox(
+                  width: 120.0,
+                  height: 40.0,
+                  child: ElevatedButton(
                     onPressed: () async {
                       List<Cloth> clothes = await fetchClothes(category.id);
                       setState(() {
@@ -339,29 +385,29 @@ class _DressingState extends State<Dressing> {
                         subCategories = category.subCategories;
                         selectedCategoryId = category.id.toString();
                         selectedSubCategoryId = null; // Reset the selected sub-category
-                        categoryId = category.id;  // Add this line
-                        subCategoryId = null;  // Add this line
+                        categoryId = category.id;
+                        subCategoryId = null;
                       });
                       selectedCategory = category.name.toLowerCase();
                     },
-                  style: ElevatedButton.styleFrom(
-                    primary: selectedCategoryId == category.id.toString() // Use toString() if id is int
-                        ? Colors.white
-                        : const Color.fromRGBO(79, 125, 88, 1),
-                    onPrimary: selectedCategoryId == category.id.toString() // Use toString() if id is int
-                        ? const Color.fromRGBO(79, 125, 88, 1)
-                        : Colors.white,
-                    side: const BorderSide(
-                      color: Color.fromRGBO(79, 125, 88, 1),
+                    style: ElevatedButton.styleFrom(
+                      primary: selectedCategoryId == category.id.toString()
+                          ? Colors.white
+                          : const Color.fromRGBO(79, 125, 88, 1),
+                      onPrimary: selectedCategoryId == category.id.toString()
+                          ? const Color.fromRGBO(79, 125, 88, 1)
+                          : Colors.white,
+                      side: const BorderSide(
+                        color: Color.fromRGBO(79, 125, 88, 1),
+                      ),
+                    ),
+                    child: Text(
+                      category.name,
+                      style: const TextStyle(fontSize: 16.0),
                     ),
                   ),
-                  child: Text(
-                    category.name,
-                    style: const TextStyle(fontSize: 16.0),
-                  ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList() ?? []
           ),
           const Padding(
             padding: EdgeInsets.all(8.0),
@@ -376,26 +422,27 @@ class _DressingState extends State<Dressing> {
           if (subCategories.isNotEmpty)
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 8.0, // space between rows
-              runSpacing: 4.0, // space between lines
+              spacing: 8.0,
+              runSpacing: 4.0,
               children: subCategories.map((subCategory) {
                 return SizedBox(
                   width: 120.0,
                   height: 40.0,
                   child: ElevatedButton(
-                      onPressed: () async {
-                        List<Cloth> clothes = await fetchSubCategoryClothes(subCategory.id);
-                        setState(() {
-                          _clothes = clothes;
-                          selectedSubCategoryId = subCategory.id.toString();
-                          subCategoryId = subCategory.id; // Add this line
-                        });
-                      },
+                    onPressed: () async {
+                      List<Cloth> clothes =
+                      await fetchSubCategoryClothes(subCategory.id);
+                      setState(() {
+                        _clothes = clothes;
+                        selectedSubCategoryId = subCategory.id.toString();
+                        subCategoryId = subCategory.id;
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
-                      primary: selectedSubCategoryId == subCategory.id.toString() // Use toString() if id is int
+                      primary: selectedSubCategoryId == subCategory.id.toString()
                           ? Colors.white
                           : const Color.fromRGBO(79, 125, 88, 1),
-                      onPrimary: selectedSubCategoryId == subCategory.id.toString() // Use toString() if id is int
+                      onPrimary: selectedSubCategoryId == subCategory.id.toString()
                           ? const Color.fromRGBO(79, 125, 88, 1)
                           : Colors.white,
                       side: const BorderSide(
@@ -422,10 +469,10 @@ class _DressingState extends State<Dressing> {
           else
             Flexible(
               child: GridView.builder(
-                itemCount: _clothes?.length ?? 0, // Nombre total d'éléments
+                itemCount: _clothes?.length ?? 0,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Nombre d'éléments par ligne
-                  childAspectRatio: 1, // Ratio pour la taille des éléments
+                  crossAxisCount: 2,
+                  childAspectRatio: 1,
                 ),
                 itemBuilder: (BuildContext context, int index) {
                   return GestureDetector(
@@ -459,7 +506,10 @@ class _DressingState extends State<Dressing> {
                                   ),
                                   Hero(
                                     tag: 'popupImage${_clothes![index].id}',
-                                    child: Image.network(_clothes![index].realUrl, fit: BoxFit.cover),
+                                    child: Image.network(
+                                      _clothes![index].realUrl,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                   SizedBox(height: 20),
                                   Text(
@@ -489,7 +539,6 @@ class _DressingState extends State<Dressing> {
                                 ],
                               ),
                             ),
-
                             actions: <Widget>[
                               TextButton(
                                 child: const Text(
@@ -501,9 +550,11 @@ class _DressingState extends State<Dressing> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => EditCloth(
-                                      clothData: clothData,
-                                    )),
+                                    MaterialPageRoute(
+                                      builder: (context) => EditCloth(
+                                        clothData: clothData,
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
@@ -536,16 +587,18 @@ class _DressingState extends State<Dressing> {
                         child: Image.network(
                           _clothes![index].realUrl,
                           fit: BoxFit.cover,
-                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                          loadingBuilder: (BuildContext context, Widget child,
+                              ImageChunkEvent? loadingProgress) {
                             if (loadingProgress == null) {
                               return child;
                             }
                             return Center(
                               child: CircularProgressIndicator(
                                 value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
                                     : null,
-                                color: Color.fromRGBO(79, 125, 88, 1), // Vert
+                                color: Color.fromRGBO(79, 125, 88, 1),
                               ),
                             );
                           },

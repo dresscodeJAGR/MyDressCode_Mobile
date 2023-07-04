@@ -101,13 +101,14 @@ class _OutfitsState extends State<Outfits> {
                   ),
                 ),
                 child: const Text('Créer une tenue'),
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const OutfitCreate(),
                     ),
                   );
+                  fetchOutfits();  // Refresh outfits after returning from OutfitCreate page
                 },
               ),
             ],
@@ -162,13 +163,14 @@ class _OutfitsState extends State<Outfits> {
           ],
         ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const OutfitCreate(),
             ),
           );
+          fetchOutfits();  // Refresh outfits after returning from OutfitCreate page
         },
         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
         child: const Icon(Icons.add),

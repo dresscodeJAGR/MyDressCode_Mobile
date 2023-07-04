@@ -37,8 +37,8 @@ class _MainWidgetState extends State<MainWidget> {
 
   final List<Widget> _pages = [
     const Home(),
-    const Dressing(),
-    const PrincipalProfile(),
+    Dressing(),
+    PrincipalProfile(),
   ];
 
   void _onItemTapped(int index) {

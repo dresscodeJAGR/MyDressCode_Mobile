@@ -169,7 +169,7 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
                   ),
                 ),
               ),
-              SizedBox(width: 16.0),
+              const SizedBox(width: 16.0),
               Expanded(
                 child: Center(
                   child: Text(
@@ -184,6 +184,5 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
       ),
     );
   }
-
 
 }
