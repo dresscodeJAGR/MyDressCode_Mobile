@@ -211,6 +211,130 @@ class _OutfitsState extends State<Outfits> {
     );
   }
 
+  void showOutfitDetails(int index) {
+    List clothes = outfits[index]['clothings'];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: RichText(
+            text: TextSpan(
+                text: 'Details de l\'outift ',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                children: [
+                  TextSpan(
+                      text: outfits[index]['name'],
+                      style: TextStyle(
+                        color: const Color.fromRGBO(79, 125, 88, 1),
+                        fontSize: 18,
+                      )
+                  )
+                ]
+            ),
+          ),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RichText(
+                text: TextSpan(
+                  text: 'Nom de l\'outfit: ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: outfits[index]['name'],
+                      style: TextStyle(
+                        color: const Color.fromRGBO(79, 125, 88, 1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              RichText(
+                text: TextSpan(
+                  text: 'Haut: ',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: clothes[0]['name'],
+                        style: TextStyle(
+                          color: const Color.fromRGBO(79, 125, 88, 1),
+                        )
+                    )
+                  ]
+                ),
+              ),
+              RichText(
+                text: TextSpan(
+                    text: 'Bas: ',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    children: [
+                      TextSpan(
+                          text: clothes[1]['name'],
+                          style: TextStyle(
+                            color: const Color.fromRGBO(79, 125, 88, 1),
+                          )
+                      )
+                    ]
+                ),
+              ),
+              RichText(
+                text: TextSpan(
+                    text: 'Chaussures: ',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    children: [
+                      TextSpan(
+                          text: clothes[2]['name'],
+                          style: TextStyle(
+                            color: const Color.fromRGBO(79, 125, 88, 1),
+                          )
+                      )
+                    ]
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                primary: Colors.grey,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();  // Ferme la boîte de dialogue
+              },
+              child: const Text("Fermer"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+
+
+
   Widget _buildOutfit(double height, int index) {
     double imageSize = height * 0.25; // 25% de la hauteur disponible
     var outfit = outfits[index];
@@ -291,6 +415,14 @@ class _OutfitsState extends State<Outfits> {
             onPressed: () => confirmationSuppression(index, outfit['name'], outfit['id']),
           ),
         ),
+        Positioned(
+          top: 8,
+          left: 8,
+          child: IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => showOutfitDetails(outfit['id'])
+          )
+        )
       ],
     );
   }
