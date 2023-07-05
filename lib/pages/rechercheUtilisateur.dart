@@ -42,7 +42,6 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
   }
 
   Future<void> fetchUsers() async {
-    print('fetchUsers');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
@@ -70,7 +69,6 @@ class _RechercheUtilisateurState extends State<RechercheUtilisateur> {
       }
       setState(() {
         userList = users; // Update userList
-        print("userList: '$userList'");
       });
     } else {
       throw Exception('Failed to load users');

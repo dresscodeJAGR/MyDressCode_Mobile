@@ -24,7 +24,6 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
 
   @override
   void initState() {
-    print('initState');
     super.initState();
     getUserDatas().then((_) {
       setState(() {
@@ -54,8 +53,6 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
           _favoriteOutfits = List<bool>.from(outfits.map((outfit) => outfit['is_favorized'] ?? false));
           _isUserFavorized = user['is_favorized'] ?? false;
         });
-        print(user);
-        print(outfits);
       } else {
         setState(() {
           isLoading = false;
@@ -88,13 +85,11 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
         _favoriteStars[index] = !_favoriteStars[index];
       });
     } else if (response.statusCode == 404) {
-      print('Outfit not found');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('L\'outfit n\'a pas été trouvé')),
       );
     }
     else {
-      print('Failed to toggle favorite outfit');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Une erreur est survenue')),
       );
@@ -156,12 +151,10 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
     );
 
     if (response.statusCode == 200) {
-      print('User favorized');
       setState(() {
         _isUserFavorized = !_isUserFavorized;
       });
     } else {
-      print('Failed to toggle favorite user');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Une erreur est survenue')),
       );

@@ -46,7 +46,6 @@ class _OutfitsState extends State<Outfits> {
         isLoading = false;
       });
     } else {
-      print('Failed to load outfits');
       setState(() {
         isLoading = false;
       });
@@ -67,7 +66,6 @@ class _OutfitsState extends State<Outfits> {
     );
 
     if (response.statusCode == 200) {
-      print('Outfit deleted');
       fetchOutfits();
     } else {
       print('Failed to delete outfit');
