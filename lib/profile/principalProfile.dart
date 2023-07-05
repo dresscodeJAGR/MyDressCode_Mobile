@@ -226,7 +226,7 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
+         /*Expanded(
             flex: 1,
             child: Padding(
               padding: const EdgeInsets.only(right: 10),
@@ -248,7 +248,7 @@ class _PrincipalProfileState extends State<PrincipalProfile> {
                 ),
               ),
             ),
-          ),
+          ),*/
           Expanded(
             flex: 1,
             child: Padding(

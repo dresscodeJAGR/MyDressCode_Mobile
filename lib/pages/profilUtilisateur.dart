@@ -174,7 +174,10 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
       appBar: buildAppBar(),
       body: isLoading
           ? const Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(
+          backgroundColor: Color.fromRGBO(79, 125, 88, 1),
+          color: Color.fromRGBO(79, 125, 88, 1),
+        ),
       )
           : SingleChildScrollView(
         child: Column(
@@ -340,6 +343,7 @@ class _ProfilUtilisateurState extends State<ProfilUtilisateur> {
                     return Center(
                       child: CircularProgressIndicator(
                         backgroundColor: const Color.fromRGBO(79, 125, 88, 1),
+                        color: const Color.fromRGBO(79, 125, 88, 1),
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                             : null,
